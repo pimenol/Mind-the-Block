@@ -112,10 +112,10 @@ def make_split(d, split, kind, mask_seed, mode):
               age_end=age[ends], obs_count=win_valid.sum(1))
 
 
-def train_gru(tx, ty, data_seed, init, epochs=12, per_epoch=1600):
+def train_gru(tx, ty, data_seed, init, epochs=12, per_epoch=1600, hidden=8):
   """Same schedule as starter.run. init=0 reproduces the starter exactly."""
   s = data_seed + 1000 * init
-  model = GRU(tx.shape[2], s)
+  model = GRU(tx.shape[2], s, hidden)
   rng = np.random.default_rng(s)
   for _ in range(epochs):
     ix = rng.permutation(len(tx))[:per_epoch]
@@ -138,17 +138,19 @@ def train_set(d, train_kind, mode, data_seed):
   return s['x'], s['y']
 
 
-def get_model(d, data_seed, train_kind='scatter', mode='zero', init=0):
+def get_model(d, data_seed, train_kind='scatter', mode='zero', init=0,
+              epochs=12, hidden=8):
   """Train or load a cached GRU (cache lives in results/models, ignored)."""
   MODELS.mkdir(parents=True, exist_ok=True)
-  path = MODELS / f'{data_seed}_{train_kind}_{mode}_{init}.npz'
+  tag = '' if (epochs, hidden) == (12, 8) else f'_e{epochs}_h{hidden}'
+  path = MODELS / f'{data_seed}_{train_kind}_{mode}_{init}{tag}.npz'
   if path.exists():
     p = dict(np.load(path))
     model = GRU(18, 0)
     model.p = {k: (v if v.ndim else np.array(v)) for k, v in p.items()}
     return model
   tx, ty = train_set(d, train_kind, mode, data_seed)
-  model = train_gru(tx, ty, data_seed, init)
+  model = train_gru(tx, ty, data_seed, init, epochs=epochs, hidden=hidden)
   np.savez(path, **model.p)
   return model
 

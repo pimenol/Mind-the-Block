@@ -85,7 +85,8 @@ def kalman_states(raw, m, split, sensors=None):
   return means, covs, t, c
 
 
-def batched_restart(means, covs, t, c, raw, m, starts, stops, use, horizon=6):
+def batched_restart(means, covs, t, c, raw, m, starts, stops, use, horizon=6,
+                    bump=None):
   """Per-window filters run in a batch. Window w restarts from the filtered
   state at starts[w]-1 and assimilates raw[starts[w]..stops[w]] using the
   boolean matrix use (windows x steps x 6). Missing readings get a huge
@@ -106,6 +107,8 @@ def batched_restart(means, covs, t, c, raw, m, starts, stops, use, horizon=6):
     o = use[:, k] & np.isfinite(raw[tkc])
     rdiag = np.where(o, R, BIG)
     yk = np.where(o, np.nan_to_num(raw[tkc]), 0.)
+    if bump is not None and k == 0:
+      yk = yk + bump  # perturb the first assimilated reading (sensitivity)
     pred = (mu_p + c[tkc]) @ m
     s = np.einsum('ij,njk,kl->nil', h, p_p, h.T) + rdiag[:, :, None] * np.eye(6)
     phT = np.einsum('nij,jk->nik', p_p, h.T)
