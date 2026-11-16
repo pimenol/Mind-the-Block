@@ -1,0 +1,16 @@
+{
+  "type": "SYNTHETIC, not Beijing or any real sensor dataset",
+  "seeds": [
+    940,
+    941,
+    942
+  ],
+  "sensors": 6,
+  "sampling": "one arbitrary time unit",
+  "split": "chronological; 2800 train,1000 dev,1000 final test",
+  "natural_missing_probability": 0.035,
+  "lookback": 24,
+  "horizon": 6,
+  "source": "generate_data.py",
+  "license": "CC0-1.0"
+}

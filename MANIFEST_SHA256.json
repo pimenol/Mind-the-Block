@@ -1,0 +1,13 @@
+{
+  "LICENSE-CODE.txt": "52cb3d8fa4011b52315f1f73d347133533496ad47bf19163484a0779d22cb406",
+  "README.md": "0571389a1b00c9c6d7acddd197a1bbc6e35382dafa6d73943b5d30cc1f9215fc",
+  "VALIDATION.json": "72b03688f8605699ed448d2fcf587e3cbc95028a199cf6fd61d108bb45e7320c",
+  "check_data.py": "d755dd526fb38522081d87dfe89e34a5a16d778fd4480d89febe3efada513ac2",
+  "data/metadata.json": "62de1bece2ea08b68a66d1fbc4aca6e866c3e2c4e503a7e5c6a7ad39bdc8b35f",
+  "data/synthetic_940.npz": "1a9e731840b41e3ab1e5be6252c229e0169cb912df85cf7045c0ebe4e33df871",
+  "data/synthetic_941.npz": "0bb0086c73c1fb3bccf89c5cb035c66690c7292f827a68254a99345cae49153e",
+  "data/synthetic_942.npz": "ede68800c372fd1645d2310d2fa5d1a6b87522cbba038fb1a965cb9d3e3f52ff",
+  "generate_data.py": "8419524a8db4412263c6491980de8b96011fb38979b4a7a75269e99a4744182c",
+  "requirements.txt": "105a25c9a24a53a42b52ccc93f930e1ea4a88b42372d440ae7c1b82c3a8b2c64",
+  "starter.py": "d72e27d2ca3c4c3c4e7641edaea0c5e018934a953e891c829eb67f2b3a82a401"
+}

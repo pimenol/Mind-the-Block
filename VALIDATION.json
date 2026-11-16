@@ -1,0 +1,169 @@
+{
+  "runtime": "Python 3, NumPy 2.3.5, CPU; Colab not directly tested",
+  "standard_runs": [
+    {
+      "seed": 940,
+      "seconds": 3.039,
+      "status": "pass",
+      "result": {
+        "seed": 940,
+        "dataset": "SYNTHETIC six-sensor benchmark",
+        "partition": "dev",
+        "conditions": [
+          "scatter",
+          "block"
+        ],
+        "additional_missing_per_sensor": [
+          240,
+          244,
+          240,
+          239,
+          243,
+          239
+        ],
+        "matched_scatter_counts": true,
+        "results": [
+          {
+            "age_input": false,
+            "condition": "scatter",
+            "rmse": 0.4640845167021038,
+            "persistence_rmse": 0.5518261790275574,
+            "examples": 932
+          },
+          {
+            "age_input": false,
+            "condition": "block",
+            "rmse": 0.48299792371414063,
+            "persistence_rmse": 0.5899056196212769,
+            "examples": 932
+          },
+          {
+            "age_input": true,
+            "condition": "scatter",
+            "rmse": 0.4641119881640488,
+            "persistence_rmse": 0.5518261790275574,
+            "examples": 932
+          },
+          {
+            "age_input": true,
+            "condition": "block",
+            "rmse": 0.4835049291292056,
+            "persistence_rmse": 0.5899056196212769,
+            "examples": 932
+          }
+        ],
+        "warning": "Starter results are not evidence that observation age fully explains missingness shift."
+      }
+    },
+    {
+      "seed": 941,
+      "seconds": 3.281,
+      "status": "pass",
+      "result": {
+        "seed": 941,
+        "dataset": "SYNTHETIC six-sensor benchmark",
+        "partition": "dev",
+        "conditions": [
+          "scatter",
+          "block"
+        ],
+        "additional_missing_per_sensor": [
+          241,
+          242,
+          241,
+          241,
+          239,
+          242
+        ],
+        "matched_scatter_counts": true,
+        "results": [
+          {
+            "age_input": false,
+            "condition": "scatter",
+            "rmse": 0.5197217990435846,
+            "persistence_rmse": 0.5799685716629028,
+            "examples": 939
+          },
+          {
+            "age_input": false,
+            "condition": "block",
+            "rmse": 0.5264951141897324,
+            "persistence_rmse": 0.5952968597412109,
+            "examples": 939
+          },
+          {
+            "age_input": true,
+            "condition": "scatter",
+            "rmse": 0.5196700830387947,
+            "persistence_rmse": 0.5799685716629028,
+            "examples": 939
+          },
+          {
+            "age_input": true,
+            "condition": "block",
+            "rmse": 0.5260891511537225,
+            "persistence_rmse": 0.5952968597412109,
+            "examples": 939
+          }
+        ],
+        "warning": "Starter results are not evidence that observation age fully explains missingness shift."
+      }
+    },
+    {
+      "seed": 942,
+      "seconds": 3.9,
+      "status": "pass",
+      "result": {
+        "seed": 942,
+        "dataset": "SYNTHETIC six-sensor benchmark",
+        "partition": "dev",
+        "conditions": [
+          "scatter",
+          "block"
+        ],
+        "additional_missing_per_sensor": [
+          241,
+          240,
+          240,
+          242,
+          240,
+          238
+        ],
+        "matched_scatter_counts": true,
+        "results": [
+          {
+            "age_input": false,
+            "condition": "scatter",
+            "rmse": 0.8742482940398714,
+            "persistence_rmse": 1.02414071559906,
+            "examples": 936
+          },
+          {
+            "age_input": false,
+            "condition": "block",
+            "rmse": 0.914875706659902,
+            "persistence_rmse": 1.0890392065048218,
+            "examples": 936
+          },
+          {
+            "age_input": true,
+            "condition": "scatter",
+            "rmse": 0.8743083860095181,
+            "persistence_rmse": 1.02414071559906,
+            "examples": 936
+          },
+          {
+            "age_input": true,
+            "condition": "block",
+            "rmse": 0.9151522454283975,
+            "persistence_rmse": 1.0890392065048218,
+            "examples": 936
+          }
+        ],
+        "warning": "Starter results are not evidence that observation age fully explains missingness shift."
+      }
+    }
+  ],
+  "checks": "python check_data.py passes",
+  "final_smoke": "pass"
+}
