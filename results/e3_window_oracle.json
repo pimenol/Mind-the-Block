@@ -1,0 +1,122 @@
+[
+ {
+  "seed": 940,
+  "mse_gap": {
+   "kalman_full": 0.007888321223513326,
+   "kalman_window24": 0.00789012316413707,
+   "gru_scatter": 0.0164424616990915
+  },
+  "stale": {
+   "kalman_window24": 0.031656872313682576,
+   "gru_scatter": 0.100119855123436,
+   "kalman_full": 0.03165547000786813
+  },
+  "fresh": {
+   "kalman_window24": 0.0015605096241930942,
+   "gru_scatter": 0.001993197591637773
+  },
+  "rmse_window24": {
+   "scatter": 0.44554604082378046,
+   "block": 0.4543142058728551
+  },
+  "exposure": {
+   "age0>=3": {
+    "windows": 193,
+    "distinct_outages": 23
+   },
+   "age0>=5": {
+    "windows": 152,
+    "distinct_outages": 23
+   },
+   "age0>=9": {
+    "windows": 65,
+    "distinct_outages": 11
+   }
+  },
+  "e2_offset0_window24": {
+   "s0": 0.0007649777244491105,
+   "others": 0.009785083226991537,
+   "all": 0.0427257567482608
+  }
+ },
+ {
+  "seed": 941,
+  "mse_gap": {
+   "kalman_full": 0.0014861634884080993,
+   "kalman_window24": 0.0014913717703592055,
+   "gru_scatter": 0.008062702083175282
+  },
+  "stale": {
+   "kalman_window24": 0.0006263295308940928,
+   "gru_scatter": 0.0298084683086333,
+   "kalman_full": 0.000599721041198919
+  },
+  "fresh": {
+   "kalman_window24": 0.0009367338307355667,
+   "gru_scatter": 0.009746085041584092
+  },
+  "rmse_window24": {
+   "scatter": 0.4448000409287391,
+   "block": 0.44647334543124423
+  },
+  "exposure": {
+   "age0>=3": {
+    "windows": 200,
+    "distinct_outages": 21
+   },
+   "age0>=5": {
+    "windows": 158,
+    "distinct_outages": 21
+   },
+   "age0>=9": {
+    "windows": 78,
+    "distinct_outages": 5
+   }
+  },
+  "e2_offset0_window24": {
+   "s0": 0.0027755410920084454,
+   "others": 0.004355799613209553,
+   "all": 0.03820681724740329
+  }
+ },
+ {
+  "seed": 942,
+  "mse_gap": {
+   "kalman_full": 0.0059657874547566535,
+   "kalman_window24": 0.005977677357122397,
+   "gru_scatter": 0.06289400227560067
+  },
+  "stale": {
+   "kalman_window24": 0.030898780836424708,
+   "gru_scatter": 0.29278981686255146,
+   "kalman_full": 0.03089859922288312
+  },
+  "fresh": {
+   "kalman_window24": -5.832290460409895e-05,
+   "gru_scatter": 0.03114635084983801
+  },
+  "rmse_window24": {
+   "scatter": 0.7057993888010585,
+   "block": 0.7100214465697992
+  },
+  "exposure": {
+   "age0>=3": {
+    "windows": 178,
+    "distinct_outages": 23
+   },
+   "age0>=5": {
+    "windows": 133,
+    "distinct_outages": 23
+   },
+   "age0>=9": {
+    "windows": 48,
+    "distinct_outages": 7
+   }
+  },
+  "e2_offset0_window24": {
+   "s0": 0.010152181115954886,
+   "others": 0.005065767958435751,
+   "all": 0.0851055495898712
+  }
+ }
+]
