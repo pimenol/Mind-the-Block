@@ -1,0 +1,234 @@
+<title>Stale-Fill Trust</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (about 70ch) with wide figures and tables that scroll inside their own box. */
+:root {
+  --bg: #f7f8fa; --panel: #ffffff; --fg: #15181d; --fg2: #4a5160; --muted: #6b7280; --rule: #dde1e8; --grid: #e7eaf0;
+  --accent: #1f5fae; --chip-ok: #e3f1e6; --chip-ok-fg: #1d5b2b; --chip-no: #f8e4e2; --chip-no-fg: #8a2620;
+  --chip-mid: #fbf0d9; --chip-mid-fg: #7a5200;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  --display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121418; --panel: #1a1d22; --fg: #eceef2; --fg2: #b9bfcb; --muted: #8e95a3; --rule: #2c313a; --grid: #262a32;
+  --accent: #6aa5ee; --chip-ok: #1b3322; --chip-ok-fg: #9fd8ad; --chip-no: #3a1f1d; --chip-no-fg: #f0a59e;
+  --chip-mid: #352a12; --chip-mid-fg: #f0c97a;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121418; --panel: #1a1d22; --fg: #eceef2; --fg2: #b9bfcb; --muted: #8e95a3; --rule: #2c313a; --grid: #262a32;
+  --accent: #6aa5ee; --chip-ok: #1b3322; --chip-ok-fg: #9fd8ad; --chip-no: #3a1f1d; --chip-no-fg: #f0a59e;
+  --chip-mid: #352a12; --chip-mid-fg: #f0c97a;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body); }
+main { max-width: 980px; margin: 0 auto; padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+main > * { min-width: 0; }
+.prose { max-width: 70ch; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); font-weight: 650; }
+h2 { font-size: 1.6rem; font-weight: 650; padding-top: 18px; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.15rem; font-weight: 650; }
+p { margin: 0; } section { display: grid; gap: 14px; }
+.eyebrow { font: 500 .78rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.15rem; color: var(--fg2); max-width: 66ch; }
+.claim { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 20px; display: grid; gap: 10px; max-width: 78ch; }
+.claim strong { color: var(--accent); }
+code, .num { font-family: var(--mono); font-size: .9em; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.tablewrap, .svgwrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: .86rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { font-weight: 600; color: var(--fg2); background: var(--panel); position: sticky; top: 0; }
+td:first-child, th:first-child, td:nth-child(2), th:nth-child(2) { text-align: left; }
+td.wrap, th.wrap { white-space: normal; text-align: left; min-width: 16ch; }
+td .d { display: block; color: var(--muted); font-size: .78rem; }
+.verdicts td { vertical-align: top; }
+.chip { display: inline-block; font: 600 .72rem/1 var(--body); letter-spacing: .04em; text-transform: uppercase; padding: 5px 8px; border-radius: 4px; }
+.chip.ok { background: var(--chip-ok); color: var(--chip-ok-fg); }
+.chip.no { background: var(--chip-no); color: var(--chip-no-fg); }
+.chip.mid { background: var(--chip-mid); color: var(--chip-mid-fg); }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+figure.chart { margin: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+figcaption { font-weight: 600; font-size: .92rem; }
+svg { width: 100%; height: auto; display: block; min-width: 380px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .zero { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+svg .tick { fill: var(--muted); font: 11px var(--mono); }
+svg .axis { fill: var(--fg2); font: 11.5px var(--body); }
+svg .dlabel { fill: var(--fg2); font: 11.5px var(--body); }
+svg .pt { stroke: var(--panel); stroke-width: 2; cursor: default; }
+svg circle.pt:hover, svg rect.pt:hover { stroke: var(--fg); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; color: var(--fg2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.note { font-size: .88rem; color: var(--muted); max-width: 78ch; }
+.steps { counter-reset: s; list-style: none; padding: 0; display: grid; gap: 14px; }
+.steps li { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 6px; }
+.steps li b { font-family: var(--display); font-size: 1.05rem; }
+pre { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; overflow-x: auto; font: .84rem/1.5 var(--mono); margin: 0; }
+#tip { position: fixed; pointer-events: none; background: var(--fg); color: var(--bg); font: 12px var(--mono); padding: 5px 8px; border-radius: 4px; z-index: 20; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+
+<main>
+<header style="display:grid;gap:14px">
+  <p class="eyebrow">Project 04 · Step 1 · Synthetic six-sensor benchmark · dev partition only</p>
+  <h1>Stale-fill trust: why 8-step outages hurt the GRU</h1>
+  <p class="lede">The scatter-trained GRU loses accuracy under block outages mostly because it reads every forward-filled value as a current reading. The information it needs is still in the window. A Bayes-optimal filter that sees the same 24 steps loses much less.</p>
+</header>
+
+<div class="claim">
+  <p><strong>Claim.</strong> On this benchmark, {{EXCESS_RANGE}} of the GRU's block-minus-scatter MSE gap is model failure, not lost information (3 of 3 seeds). The trigger is a stale value at the forecast origin, on sensor 0 or on any other sensor. The cause is that the forecast does not discount a value by its age. The Kalman sensitivity to the last sensor-0 reading drops from {{KF_SENS_0}} at age 0 to {{KF_SENS_9}} at age 9+. The GRU sensitivity goes from {{GRU_SENS_0}} to {{GRU_SENS_9}}.</p>
+  <p>Matched-budget training on block masks and the age input do not fix this. The age input changes block RMSE by at most {{AGE_VS_ZERO}}.</p>
+</div>
+
+{{GAP_CHART}}
+<p class="note">Oracle: a Kalman filter built from the exact generator parameters (recovered by replaying the generator's random numbers), restarted at the first step of each 24-step window. It sees only the readings that the GRU sees. It also knows the true parameters and the seasonal phase, so it is a lower bound on error. The quantity used here is its gap between masks, not its error level. A full-history filter gives the same gap to 4 decimals.</p>
+
+<section>
+  <h2>Four explanations and what happened to them</h2>
+  <p class="prose">The falsifiers were fixed in <code>research/HYPOTHESES.md</code> before E1 to E5 ran. The replication unit is the data seed (940, 941, 942). Each seed uses 5 GRU initializations.</p>
+  <div class="tablewrap"><table class="verdicts">
+    <tr><th>ID</th><th class="wrap">Explanation</th><th>Verdict</th><th class="wrap">Deciding evidence</th></tr>
+    <tr><td>H1</td><td class="wrap">Stale own-sensor value at the forecast origin (given idea)</td><td><span class="chip mid">Trigger, not cause</span></td>
+      <td class="wrap">Persistence: 100% of its gap comes from stale origins (fresh-origin difference is exactly 0 in 3/3 seeds). GRU: stale origins carry the largest loss per window, but the oracle loses 3 to 50 times less on the same windows. The GRU also loses on windows where sensor 0 is fresh, clearly in seeds 941 and 942, where the oracle loses nothing.</td></tr>
+    <tr><td>H2</td><td class="wrap">Lost temporal context: an outage anywhere in the window damages the hidden state</td><td><span class="chip no">Rejected</span></td>
+      <td class="wrap">An 8-step outage that ends 8 or 16 steps before the origin costs every model about 0 MSE (3/3 seeds, all sensor sets). Only an outage that reaches the origin costs error.</td></tr>
+    <tr><td>H3</td><td class="wrap">Training-support shortcut: scatter training never shows stale values, so the GRU over-trusts them</td><td><span class="chip mid">Half right</span></td>
+      <td class="wrap">Right: the gap is mostly excess over the oracle ({{EXCESS_RANGE}}). Wrong: block or mixed training at the same budget closes the total gap fully in 1/3 seeds and partly in 1/3, and leaves the stale-origin loss in place. The GRU does not learn to discount by age.</td></tr>
+    <tr><td>H4</td><td class="wrap">Cross-sensor substitution failure: with sensor 0 stale, the GRU does not use fresh correlated sensors</td><td><span class="chip ok">Holds, wider</span></td>
+      <td class="wrap">The information is there: the all-sensor oracle beats the sensor-0-only oracle on stale windows. But the falsifier "only sensor-0 outages matter" failed. An outage on the 5 other sensors costs the GRU {{OTHERS_GRU}} MSE and the oracle {{OTHERS_KF}}. The GRU trusts the stale fill of every sensor.</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Setup and exposure</h2>
+  <p class="prose">Each window has 24 past steps and forecasts sensor 0 six steps after the last input. Both masks remove the same count per sensor. The table shows what this count match does not control. Block masks make sensor 0 stale at the origin in about 1 in 5 windows. Scatter masks do this in about 1 in 50.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Seed</th><th>Mask</th><th>Windows</th><th>Mean age0</th><th>age0 ≥ 3</th><th>Mean age, all sensors</th><th>Stale sensors at origin</th><th>Sensor-0 readings per window</th><th>Min readings</th><th>All sensors stale</th><th>Mean sensor-0 gap run</th><th>Windows / distinct outages, age0 ≥ 5</th></tr>
+    {{EXPOSURE_ROWS}}
+  </table></div>
+  <p class="note">Ages are in steps at the forecast origin. Stale bins under the block mask come from about 21 to 23 distinct sensor-0 outages per seed, so window counts overstate the evidence. The controlled intervention in E2 (about 910 windows, one outage each) gives the clean estimate. The natural-mask bins in E1 give the realistic but noisy one. In almost no window are all sensors stale at once, because blocks are drawn independently per sensor.</p>
+  <h3>E0. Baseline RMSE, 5 initializations per seed</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Seed</th><th>Model</th><th>Scatter</th><th>Block</th><th>Gap</th><th>Scatter, init range</th></tr>
+    {{BASELINE_ROWS}}
+  </table></div>
+  <p class="note">RMSE in raw sensor units. Initialization 0 reproduces <code>VALIDATION.json</code> exactly. The fills-only arm (mask and age channels set to 0) performs like the other two arms.</p>
+</section>
+
+<section>
+  <h2>E1. Same window, two masks: where the GRU loses</h2>
+  <p class="prose">Both masks score the same windows. The paired difference per window removes window difficulty, which made the unpaired per-age bins noisy. For persistence the loss is exactly 0 when sensor 0 is fresh, and it grows with age. The GRU loses more than the oracle at every age. In seeds 941 and 942 it also loses at age 0, where persistence and the oracle lose nothing. In seed 940 its age-0 loss equals the oracle's.</p>
+  {{PAIRED_CHART}}
+  <div class="tablewrap"><table>
+    <tr><th>Seed</th><th>Fresh windows</th><th>GRU</th><th>Oracle (24 steps)</th><th>Persistence</th><th>Stale windows</th><th>GRU</th><th>Oracle (24 steps)</th><th>Oracle, sensor 0 only</th></tr>
+    {{FRESH_STALE_ROWS}}
+  </table></div>
+  <p class="note">Block minus scatter MSE per window. Fresh: sensor-0 age 0 under both masks. Stale: age 0 under scatter, age 5 or more under block. In seed 942 the GRU on stale windows loses about as much as an oracle that sees sensor 0 only. Seed 941 shows a small stale-window effect in the natural mask, but the controlled intervention below shows the same mechanism in 941.</p>
+</section>
+
+<section>
+  <h2>E2. Move one outage through the window</h2>
+  <p class="prose">Each dev window keeps its scatter mask. One 8-step outage is added that ends 0, 4, 8 or 16 steps before the origin. Fill and age are recomputed causally after the outage. If lost temporal context (H2) mattered, early outages would cost error. They cost about nothing. An outage at the origin on sensor 0 costs the GRU {{S0_GRU}} MSE and the oracle {{S0_KF}}.</p>
+  <div class="figs">{{E2_CHARTS}}</div>
+  <div class="tablewrap"><table>
+    <tr><th>Seed</th><th>Outage on</th><th>GRU</th><th>Oracle</th><th>Oracle, sensor 0 only</th><th>Persistence</th><th>GRU, largest |cost| at offset 8 or 16</th></tr>
+    {{E2_ROWS}}
+  </table></div>
+  <p class="note">Extra MSE against the same windows without the added outage, offset 0. The oracle here uses the full dev history. The 24-step oracle gives the same values to 3 decimals (see <code>results/e3_window_oracle.json</code>).</p>
+</section>
+
+<section>
+  <h2>E3 and E4. The forecast does not discount by age</h2>
+  <p class="prose">The sensitivity test perturbs the held sensor-0 value over its stale run and measures how much the forecast moves. The Bayes-optimal forecast trusts a reading less as it gets older, because the AR(0.88) state drifts and the other sensors carry newer information. The scatter-trained GRU does the opposite: its sensitivity rises with age. Block training lowers the whole curve, but the curve stays flat. With 4 times more steps and 32 units, block training starts to bend the curve down at high age.</p>
+  {{SENS_CHART}}
+  <h3>Training on the target pattern at the same budget</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Seed</th><th>Train mask, input</th><th>Scatter RMSE</th><th>Block RMSE</th><th>Gap</th><th>Gap, init range</th><th>Stale-window loss (age 5+)</th></tr>
+    {{TRAIN_ROWS}}
+  </table></div>
+  <p class="note">Same 12 epochs x 1600 windows, same initialization and batch order. Block training closes the total gap fully in seed 941, partly in seed 942, and not in seed 940. The age input does not change any arm. This holds also under block training, where the age is informative, so the GRU does not use the age channel.</p>
+  <h3>E4b. More steps and more units (age input on, 3 initializations)</h3>
+  <div class="tablewrap"><table>
+    <tr><th>Seed</th><th>Train mask</th><th>Epochs</th><th>Units</th><th>Scatter RMSE</th><th>Block RMSE</th><th>Stale-window loss</th><th>Sensitivity at age 0 / 9+</th></tr>
+    {{E4B_ROWS}}
+  </table></div>
+  <p class="note">The 48-epoch, 32-unit arms overfit in some seeds (no early stopping, fixed learning rate). The defensible reading is about the sensitivity curve, not RMSE: age-discounting begins to appear only with block exposure plus more training. Scatter-trained models show at most a weak decay, and only at age 9+.</p>
+</section>
+
+<section>
+  <h2>E5. Which sensors' outages matter</h2>
+  <p class="prose">A 2 x 2 factorial uses the real starter masks: sensor 0 gets scatter or block, and the other five sensors get scatter or block. For the scatter-trained GRU the two parts add up, and each costs one third to two thirds of the full gap. For the oracle both parts cost almost nothing. A ridge model with fill x fresh and fill x age terms, trained on block masks, is a learned reference without oracle knowledge. It does not beat the GRU in a consistent way.</p>
+  <div class="tablewrap"><table>
+    <tr><th>Seed</th><th>Mask cell</th><th>GRU, scatter-trained</th><th>GRU, block-trained</th><th>Ridge, block-trained</th><th>Persistence</th><th>Oracle</th></tr>
+    {{FACTORIAL_ROWS}}
+  </table></div>
+  <p class="note">RMSE, with the change against the all-scatter cell below each value.</p>
+</section>
+
+<section>
+  <h2>Mechanism</h2>
+  <p class="prose">Forward fill turns an outage into a constant input that looks like a normal reading. Scatter training almost never shows a constant older than 2 steps. So the GRU learns one fixed weight for each filled value, and that weight is right only for fresh values. Under a block mask, about 15% of origins carry a sensor-0 value that is 5 or more steps old, and other sensors are often stale too. The GRU uses such values at the same or a higher weight than fresh ones. The mask and age channels, which carry the age, enter the GRU additively. A plain 8-unit GRU trained for 600 steps does not learn the multiplicative rule "trust a value less as it ages". Showing it block masks at the same budget does not change that.</p>
+  <p class="prose">This also explains the starter result that age input "does nothing". The age is the right signal, but this model cannot turn it into a discount at this budget.</p>
+</section>
+
+<section>
+  <h2>Scope and limits</h2>
+  <ul class="prose">
+    <li>Synthetic data only: 6 sensors from 5 shared AR(0.88) factors, with a known seasonal term. Real sensor networks with nonlinear or non-stationary dynamics are outside this test.</li>
+    <li>Model: the supplied 8-unit NumPy GRU, 12 epochs x 1600 windows, learning rate 0.025. E4b tests 48 epochs and 32 units, nothing larger.</li>
+    <li>Three data seeds. Stale-window results rest on about 21 to 23 outages per seed. The direction of every main result holds in 3/3 seeds, with the exceptions named above.</li>
+    <li>The oracle knows the true parameters and the seasonal phase. It shows that the information is in the window, not that a learned model can reach the oracle error.</li>
+    <li>Dev partition only. The reserved test partition and the value-dependent mask were not loaded or run.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Next steps</h2>
+  <ol class="steps">
+    <li><b>Step 2: an age-matched test of the trust mechanism</b>
+      <span>Hold the stale age fixed and swap only the value. Replace the stale fill by the fresh true reading and by the oracle's filtered estimate. If stale-fill trust is the mechanism, the GRU's excess on stale windows goes away with the oracle estimate. If it stays, the hidden state is the problem.</span></li>
+    <li><b>Step 3: one targeted training change, tested on the mechanism</b>
+      <span>Feed the fill deviation through a learned per-sensor decay, (fill − mean) · exp(−γ<sub>j</sub> · age<sub>j</sub>). This is the input-decay part of GRU-D (Che et al. 2018), so the module is background. The contribution is the test: at the same budget, against the block-trained age-input GRU, the mask-aware recurrent baseline and persistence, does the sensitivity curve turn age-decaying, and does the stale-window loss drop. Score both, not RMSE alone.</span></li>
+    <li><b>Step 3 alternative: a reliability diagnostic</b>
+      <span>Predicted excess per window = Σ<sub>j</sub> |∂forecast / ∂fill<sub>j</sub>| · drift(age<sub>j</sub>), where drift is the AR variance growth that can be estimated from training data. Check on dev whether it ranks windows by real error better than sensor-0 age alone.</span></li>
+    <li><b>A limit statement that already holds</b>
+      <span>On this benchmark, scatter-trained plain-GRU forecasts are not reliable when any sensor's age at the origin is 3 or more, not only sensor 0. Persistence is reliable only when sensor 0 is fresh.</span></li>
+    <li><b>Freeze, then run the reserved test</b>
+      <span>Freeze the claim, the decay module or diagnostic, and all settings. Then run <code>--final</code> once, and also evaluate scatter and block masks on the test period, so time-period and mechanism effects stay separate.</span></li>
+  </ol>
+</section>
+
+<section>
+  <h2>Reproduce</h2>
+  <pre>P=miniconda3/envs/proteinttt/bin/python   # base env numpy is broken
+export OMP_NUM_THREADS=1                   # without it, BLAS threads make each run 20x slower
+$P check_data.py && $P research/test_research.py
+$P research/e0_baseline_exposure.py && $P research/e1_age_stratified.py
+$P research/e2_block_position.py && $P research/e3_window_oracle.py
+$P research/e4_training_masks.py && $P research/e4b_budget_capacity.py
+$P research/e5_cross_sensor.py && $P report/build_report.py</pre>
+  <p class="note">All runs are CPU only. The full set takes about 1 minute on 64 cores. Results are in <code>results/*.json</code>. Every number on this page is read from those files by <code>report/build_report.py</code>.</p>
+</section>
+</main>
+<div id="tip" hidden></div>
+<script>
+(function () {
+  var tip = document.getElementById('tip');
+  document.addEventListener('mousemove', function (e) {
+    var t = e.target.closest && e.target.closest('[data-tip]');
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute('data-tip');
+    tip.hidden = false;
+    var x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+    tip.style.left = x + 'px';
+    tip.style.top = (e.clientY + 14) + 'px';
+  });
+})();
+</script>
