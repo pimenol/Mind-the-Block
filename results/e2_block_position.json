@@ -1,0 +1,434 @@
+[
+ {
+  "seed": 940,
+  "n": 907,
+  "baseline": {
+   "gru_scatter": 0.21757882737213857,
+   "persistence": 0.30936708977005795,
+   "kalman": 0.20091784311911823,
+   "kalman_s0": 0.2107039069126246
+  },
+  "cells": [
+   {
+    "sensors": "s0",
+    "offset": 0,
+    "mean_age0_origin": 8.395810363836825,
+    "delta_mse": {
+     "gru_scatter": 0.04936474811467897,
+     "persistence": 0.16994372582103368,
+     "kalman": 0.0007641801063145937,
+     "kalman_s0": 0.033551607491494495
+    }
+   },
+   {
+    "sensors": "s0",
+    "offset": 4,
+    "mean_age0_origin": 0.4597574421168688,
+    "delta_mse": {
+     "gru_scatter": 0.00013028029598595672,
+     "persistence": 0.0009352356820176567,
+     "kalman": -0.0002677596242856582,
+     "kalman_s0": 0.00011185878161397328
+    }
+   },
+   {
+    "sensors": "s0",
+    "offset": 8,
+    "mean_age0_origin": 0.40573318632855565,
+    "delta_mse": {
+     "gru_scatter": 1.0548545391539318e-05,
+     "persistence": 0.0,
+     "kalman": 1.207411166110132e-05,
+     "kalman_s0": 1.1462914481379963e-07
+    }
+   },
+   {
+    "sensors": "s0",
+    "offset": 16,
+    "mean_age0_origin": 0.40573318632855565,
+    "delta_mse": {
+     "gru_scatter": 1.0677078741893116e-06,
+     "persistence": 0.0,
+     "kalman": 7.272121480688077e-07,
+     "kalman_s0": -1.3705277880138102e-12
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 0,
+    "mean_age0_origin": 0.40573318632855565,
+    "delta_mse": {
+     "gru_scatter": 0.01294557671882376,
+     "persistence": 0.0,
+     "kalman": 0.009785410450891749,
+     "kalman_s0": 1.0409879456483456e-12
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 4,
+    "mean_age0_origin": 0.40573318632855565,
+    "delta_mse": {
+     "gru_scatter": -0.0003741823401742702,
+     "persistence": 0.0,
+     "kalman": 5.870242650771008e-05,
+     "kalman_s0": 1.0410437778633793e-12
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 8,
+    "mean_age0_origin": 0.40573318632855565,
+    "delta_mse": {
+     "gru_scatter": 1.3163583535520607e-05,
+     "persistence": 0.0,
+     "kalman": 4.466490709823851e-05,
+     "kalman_s0": 1.0410407659322212e-12
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 16,
+    "mean_age0_origin": 0.40573318632855565,
+    "delta_mse": {
+     "gru_scatter": -6.642546286662222e-07,
+     "persistence": 0.0,
+     "kalman": 7.432750616887789e-06,
+     "kalman_s0": 1.0410420679764453e-12
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 0,
+    "mean_age0_origin": 8.395810363836825,
+    "delta_mse": {
+     "gru_scatter": 0.07841751362220431,
+     "persistence": 0.16994372582103368,
+     "kalman": 0.042722180693367466,
+     "kalman_s0": 0.033551607491494495
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 4,
+    "mean_age0_origin": 0.4597574421168688,
+    "delta_mse": {
+     "gru_scatter": -0.0002499308503393698,
+     "persistence": 0.0009352356820176567,
+     "kalman": 2.4189795181339362e-05,
+     "kalman_s0": 0.00011185878161397328
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 8,
+    "mean_age0_origin": 0.40573318632855565,
+    "delta_mse": {
+     "gru_scatter": 2.3741048312093277e-05,
+     "persistence": 0.0,
+     "kalman": 4.8241483377814156e-05,
+     "kalman_s0": 1.1462914481379963e-07
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 16,
+    "mean_age0_origin": 0.40573318632855565,
+    "delta_mse": {
+     "gru_scatter": 4.3894652281925554e-07,
+     "persistence": 0.0,
+     "kalman": 6.5986067438658415e-06,
+     "kalman_s0": -1.3705277880138102e-12
+    }
+   }
+  ]
+ },
+ {
+  "seed": 941,
+  "n": 914,
+  "baseline": {
+   "gru_scatter": 0.26394809698354205,
+   "persistence": 0.3330909315107586,
+   "kalman": 0.19715643638182034,
+   "kalman_s0": 0.20151214526010638
+  },
+  "cells": [
+   {
+    "sensors": "s0",
+    "offset": 0,
+    "mean_age0_origin": 8.36761487964989,
+    "delta_mse": {
+     "gru_scatter": 0.06947083132163356,
+     "persistence": 0.26051944643297165,
+     "kalman": 0.002775519424359434,
+     "kalman_s0": 0.03401828836886155
+    }
+   },
+   {
+    "sensors": "s0",
+    "offset": 4,
+    "mean_age0_origin": 0.3741794310722101,
+    "delta_mse": {
+     "gru_scatter": 0.0006722676257977123,
+     "persistence": 0.00011384669137969353,
+     "kalman": -2.0570586892147956e-05,
+     "kalman_s0": -3.8811592142933446e-05
+    }
+   },
+   {
+    "sensors": "s0",
+    "offset": 8,
+    "mean_age0_origin": 0.35557986870897157,
+    "delta_mse": {
+     "gru_scatter": 7.709287597884005e-06,
+     "persistence": 0.0,
+     "kalman": -1.6930639705450988e-06,
+     "kalman_s0": -8.036569132664998e-08
+    }
+   },
+   {
+    "sensors": "s0",
+    "offset": 16,
+    "mean_age0_origin": 0.35557986870897157,
+    "delta_mse": {
+     "gru_scatter": 9.604005075892113e-07,
+     "persistence": 0.0,
+     "kalman": 4.80021893173061e-08,
+     "kalman_s0": 1.3202244554479587e-11
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 0,
+    "mean_age0_origin": 0.35557986870897157,
+    "delta_mse": {
+     "gru_scatter": 0.0586975355251177,
+     "persistence": 0.0,
+     "kalman": 0.0043558024374428725,
+     "kalman_s0": 1.1777292603857674e-12
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 4,
+    "mean_age0_origin": 0.35557986870897157,
+    "delta_mse": {
+     "gru_scatter": 0.003720447954025092,
+     "persistence": 0.0,
+     "kalman": 8.717867783531482e-06,
+     "kalman_s0": 1.17757942406092e-12
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 8,
+    "mean_age0_origin": 0.35557986870897157,
+    "delta_mse": {
+     "gru_scatter": 0.00019165597585492236,
+     "persistence": 0.0,
+     "kalman": -1.0157034248382228e-05,
+     "kalman_s0": 1.17757471548355e-12
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 16,
+    "mean_age0_origin": 0.35557986870897157,
+    "delta_mse": {
+     "gru_scatter": 4.581609401780832e-06,
+     "persistence": 0.0,
+     "kalman": 1.213051819182142e-07,
+     "kalman_s0": 1.1775757124711346e-12
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 0,
+    "mean_age0_origin": 8.36761487964989,
+    "delta_mse": {
+     "gru_scatter": 0.1589043798859287,
+     "persistence": 0.26051944643297165,
+     "kalman": 0.038206764752763585,
+     "kalman_s0": 0.03401828836886155
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 4,
+    "mean_age0_origin": 0.3741794310722101,
+    "delta_mse": {
+     "gru_scatter": 0.0043698648051722876,
+     "persistence": 0.00011384669137969353,
+     "kalman": -1.8979352797080062e-05,
+     "kalman_s0": -3.8811592142933446e-05
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 8,
+    "mean_age0_origin": 0.35557986870897157,
+    "delta_mse": {
+     "gru_scatter": 0.0002000412895698811,
+     "persistence": 0.0,
+     "kalman": -8.98400544229719e-06,
+     "kalman_s0": -8.036569132664998e-08
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 16,
+    "mean_age0_origin": 0.35557986870897157,
+    "delta_mse": {
+     "gru_scatter": 5.672642115275299e-06,
+     "persistence": 0.0,
+     "kalman": 5.6295303838873727e-08,
+     "kalman_s0": 1.3202244554479587e-11
+    }
+   }
+  ]
+ },
+ {
+  "seed": 942,
+  "n": 912,
+  "baseline": {
+   "gru_scatter": 0.7713935283686173,
+   "persistence": 1.060682948079395,
+   "kalman": 0.5022390973795119,
+   "kalman_s0": 0.5073049573644891
+  },
+  "cells": [
+   {
+    "sensors": "s0",
+    "offset": 0,
+    "mean_age0_origin": 8.389254385964913,
+    "delta_mse": {
+     "gru_scatter": 0.16312531459356874,
+     "persistence": 1.0940170813796006,
+     "kalman": 0.010152093522299102,
+     "kalman_s0": 0.0826302461686938
+    }
+   },
+   {
+    "sensors": "s0",
+    "offset": 4,
+    "mean_age0_origin": 0.4583333333333333,
+    "delta_mse": {
+     "gru_scatter": -0.0018911305993920395,
+     "persistence": 0.010972361283709889,
+     "kalman": -4.7978027899778225e-05,
+     "kalman_s0": -0.0002370248533118665
+    }
+   },
+   {
+    "sensors": "s0",
+    "offset": 8,
+    "mean_age0_origin": 0.3991228070175439,
+    "delta_mse": {
+     "gru_scatter": 0.002202167011328508,
+     "persistence": 0.0,
+     "kalman": 2.6738461419846946e-06,
+     "kalman_s0": 4.6114971467813086e-07
+    }
+   },
+   {
+    "sensors": "s0",
+    "offset": 16,
+    "mean_age0_origin": 0.3991228070175439,
+    "delta_mse": {
+     "gru_scatter": 0.00020576147278563816,
+     "persistence": 0.0,
+     "kalman": 4.627458244758488e-08,
+     "kalman_s0": 3.139135650843776e-13
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 0,
+    "mean_age0_origin": 0.3991228070175439,
+    "delta_mse": {
+     "gru_scatter": 0.18961796986303392,
+     "persistence": 0.0,
+     "kalman": 0.00506583039013007,
+     "kalman_s0": 3.060354504269585e-13
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 4,
+    "mean_age0_origin": 0.3991228070175439,
+    "delta_mse": {
+     "gru_scatter": -0.00656111323062853,
+     "persistence": 0.0,
+     "kalman": 0.00025050109148228033,
+     "kalman_s0": 3.0605314976697033e-13
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 8,
+    "mean_age0_origin": 0.3991228070175439,
+    "delta_mse": {
+     "gru_scatter": 0.0008257307281629632,
+     "persistence": 0.0,
+     "kalman": -7.519775174975279e-06,
+     "kalman_s0": 3.0606320645993196e-13
+    }
+   },
+   {
+    "sensors": "others",
+    "offset": 16,
+    "mean_age0_origin": 0.3991228070175439,
+    "delta_mse": {
+     "gru_scatter": 0.00027382707606212126,
+     "persistence": 0.0,
+     "kalman": -1.37349996401867e-07,
+     "kalman_s0": 3.0606607234761056e-13
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 0,
+    "mean_age0_origin": 8.389254385964913,
+    "delta_mse": {
+     "gru_scatter": 0.430588519422811,
+     "persistence": 1.0940170813796006,
+     "kalman": 0.08510540269108738,
+     "kalman_s0": 0.0826302461686938
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 4,
+    "mean_age0_origin": 0.4583333333333333,
+    "delta_mse": {
+     "gru_scatter": -0.00649781446510119,
+     "persistence": 0.010972361283709889,
+     "kalman": 0.0002149367858746893,
+     "kalman_s0": -0.0002370248533118665
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 8,
+    "mean_age0_origin": 0.3991228070175439,
+    "delta_mse": {
+     "gru_scatter": 0.0035040876310779346,
+     "persistence": 0.0,
+     "kalman": -8.004515504016098e-06,
+     "kalman_s0": 4.6114971467813086e-07
+    }
+   },
+   {
+    "sensors": "all",
+    "offset": 16,
+    "mean_age0_origin": 0.3991228070175439,
+    "delta_mse": {
+     "gru_scatter": 0.0004722067098717402,
+     "persistence": 0.0,
+     "kalman": -2.2959448606697336e-07,
+     "kalman_s0": 3.139135650843776e-13
+    }
+   }
+  ]
+ }
+]
