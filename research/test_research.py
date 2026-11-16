@@ -66,15 +66,17 @@ def test_kalman_beats_persistence_and_restart_matches():
 
 def test_reproduces_validation():
   ref = json.loads((Path(common.ROOT) / 'VALIDATION.json').read_text())
-  seed = 940
-  d = load(seed)
-  tx, ty = common.train_set(d, 'scatter', 'zero', seed)
-  model = train_gru(tx, ty, seed, 0)
-  s = make_split(d, 'dev', 'block', seed + 20, 'zero')
-  got = rmse(model.predict(s['x']), s['y'], d['std'][0])
-  want = [r for r in ref['standard_runs'][0]['result']['results']
-          if not r['age_input'] and r['condition'] == 'block'][0]['rmse']
-  assert abs(got - want) < 1e-9, (got, want)
+  for run in ref['standard_runs']:
+    seed = run['seed']
+    d = load(seed)
+    for r in run['result']['results']:
+      mode = 'age' if r['age_input'] else 'zero'
+      tx, ty = common.train_set(d, 'scatter', mode, seed)
+      model = train_gru(tx, ty, seed, 0)
+      s = make_split(d, 'dev', r['condition'], seed + 20, mode)
+      got = rmse(model.predict(s['x']), s['y'], d['std'][0])
+      assert abs(got - r['rmse']) < 1e-9, (seed, r, got)
+      assert abs(rmse(s['persistence'], s['y'], d['std'][0]) - r['persistence_rmse']) < 1e-6
 
 
 def test_no_test_partition_access():

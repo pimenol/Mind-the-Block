@@ -124,8 +124,9 @@ a { color: var(--accent); }
 
 <section>
   <h2>E1. Same window, two masks: where the GRU loses</h2>
-  <p class="prose">Both masks score the same windows. The paired difference per window removes window difficulty, which made the unpaired per-age bins noisy. For persistence the loss is exactly 0 when sensor 0 is fresh, and it grows with age. The GRU loses more than the oracle at every age. In seeds 941 and 942 it also loses at age 0, where persistence and the oracle lose nothing. In seed 940 its age-0 loss equals the oracle's.</p>
+  <p class="prose">Both masks score the same windows. The paired difference per window removes window difficulty, which made the unpaired per-age bins noisy. For persistence the loss is exactly 0 when sensor 0 is fresh, and it grows with age from age 3 on. At ages 5 and above the GRU loses several times more than the oracle in 3/3 seeds. Bins 1 to 4 hold only 11 to 45 windows per seed and are noisy. In seeds 941 and 942 it also loses at age 0, where persistence and the oracle lose nothing. In seed 940 its age-0 loss equals the oracle's.</p>
   {{PAIRED_CHART}}
+  <p class="note">The mean over seeds is dominated by seed 942, whose error scale is about 3 times larger. The table below gives per-seed values.</p>
   <div class="tablewrap"><table>
     <tr><th>Seed</th><th>Fresh windows</th><th>GRU</th><th>Oracle (24 steps)</th><th>Persistence</th><th>Stale windows</th><th>GRU</th><th>Oracle (24 steps)</th><th>Oracle, sensor 0 only</th></tr>
     {{FRESH_STALE_ROWS}}
@@ -137,6 +138,7 @@ a { color: var(--accent); }
   <h2>E2. Move one outage through the window</h2>
   <p class="prose">Each dev window keeps its scatter mask. One 8-step outage is added that ends 0, 4, 8 or 16 steps before the origin. Fill and age are recomputed causally after the outage. If lost temporal context (H2) mattered, early outages would cost error. They cost about nothing. An outage at the origin on sensor 0 costs the GRU {{S0_GRU}} MSE and the oracle {{S0_KF}}.</p>
   <div class="figs">{{E2_CHARTS}}</div>
+  <p class="note">Offsets are drawn at equal spacing, not to scale. Seed 942 dominates the mean. The table gives per-seed values.</p>
   <div class="tablewrap"><table>
     <tr><th>Seed</th><th>Outage on</th><th>GRU</th><th>Oracle</th><th>Oracle, sensor 0 only</th><th>Persistence</th><th>GRU, largest |cost| at offset 8 or 16</th></tr>
     {{E2_ROWS}}
