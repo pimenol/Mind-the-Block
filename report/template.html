@@ -112,7 +112,7 @@ details .tablewrap { margin-bottom: 10px; }
   <p class="eyebrow">Project 04 · Steps 1, 1b and 1c · synthetic six-sensor data · dev data only</p>
   <h1>Why long outages hurt the GRU forecaster</h1>
   <p class="lede">When readings are missing in long blocks, the GRU uses old filled values as if they were new. The information it needs is still in the input window. So most of the extra error is a failure of the model, not a loss of information.</p>
-  <nav class="toc"><a href="#problem">1. Problem</a><a href="#ideas">2. Four explanations</a><a href="#method">3. Experiments</a><a href="#results">4. Results</a><a href="#why">5. Why the GRU does not learn it</a><a href="#beyond">6. Transformer and real data</a><a href="#conclusion">7. Conclusion</a><a href="#next">8. Next steps</a><a href="#details">Per-seed tables</a></nav>
+  <nav class="toc"><a href="#problem">1. Problem</a><a href="#ideas">2. Hypotheses</a><a href="#method">3. Experiments</a><a href="#results">4. Results</a><a href="#why">5. Why the GRU does not learn it</a><a href="#beyond">6. Transformer and real data</a><a href="#conclusion">7. Conclusion</a><a href="#next">8. Next steps</a><a href="#details">Per-seed tables</a></nav>
 </header>
 
 <div class="tiles">
@@ -140,8 +140,23 @@ details .tablewrap { margin-bottom: 10px; }
 </section>
 
 <section id="ideas">
-  <h2>2. Four possible explanations</h2>
-  <p class="prose">We wrote down four explanations before we ran any experiment. For each one, we also wrote the result that proves it wrong. These are fixed in <code>research/HYPOTHESES.md</code>.</p>
+  <h2>2. Hypotheses: 12 tests in three steps</h2>
+  <p class="prose">We tested 12 hypotheses in three steps. Step 1 asks what goes wrong (H1 to H4). Step 1b asks why the GRU does not learn the fix (H5, H6). Step 1c asks if the result holds for a transformer and on real data (T1 to T4, R1, R2). Each was written with its falsifier before its experiment ran. All are fixed in <code>research/HYPOTHESES.md</code>. The cards below explain H1 to H4. H5 and H6 are explained in section 5, T1 to R2 in section 6.</p>
+  <div class="tablewrap"><table class="wtable">
+    <tr><th>Step</th><th>ID</th><th>Hypothesis</th><th>Verdict</th><th>Section</th></tr>
+    <tr><td>1</td><td>H1</td><td>A stale value at the origin causes the gap</td><td><span class="chip mid">Trigger, not cause</span></td><td><a href="#results">4</a></td></tr>
+    <tr><td>1</td><td>H2</td><td>Any hole in the window damages the memory</td><td><span class="chip no">Rejected</span></td><td><a href="#results">4</a></td></tr>
+    <tr><td>1</td><td>H3</td><td>Scatter training never shows old values</td><td><span class="chip mid">Half right</span></td><td><a href="#results">4</a></td></tr>
+    <tr><td>1</td><td>H4</td><td>The GRU does not use the fresh other sensors</td><td><span class="chip ok">Holds, wider</span></td><td><a href="#results">4</a></td></tr>
+    <tr><td>1b</td><td>H5</td><td>The GRU memory forgets how old a value is</td><td><span class="chip mid">Partly right</span></td><td><a href="#why">5</a></td></tr>
+    <tr><td>1b</td><td>H6</td><td>The targets are too noisy to teach the discount</td><td><span class="chip no">Rejected</span></td><td><a href="#why">5</a></td></tr>
+    <tr><td>1c</td><td>T1</td><td>A transformer has the same model failure</td><td><span class="chip ok">Holds</span></td><td><a href="#beyond">6</a></td></tr>
+    <tr><td>1c</td><td>T2</td><td>A transformer also trusts old values</td><td><span class="chip ok">Holds</span></td><td><a href="#beyond">6</a></td></tr>
+    <tr><td>1c</td><td>T3</td><td>A transformer keeps "how old" but does not use it</td><td><span class="chip no">Rejected</span></td><td><a href="#beyond">6</a></td></tr>
+    <tr><td>1c</td><td>T4</td><td>The optimizer (Adam vs SGD) is not the cause</td><td><span class="chip ok">Holds</span></td><td><a href="#beyond">6</a></td></tr>
+    <tr><td>1c</td><td>R1</td><td>Real data: old windows carry most of the gap</td><td><span class="chip ok">Holds</span></td><td><a href="#beyond">6</a></td></tr>
+    <tr><td>1c</td><td>R2</td><td>Real data: the best trust falls with age, the GRU trust does not</td><td><span class="chip ok">Holds</span></td><td><a href="#beyond">6</a></td></tr>
+  </table></div>
   {{STALE_DIAGRAM}}
   <div class="cards">
     <div class="card"><span class="id">H1 · the given idea</span><h3>Stale value at the origin</h3>

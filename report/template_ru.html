@@ -112,7 +112,7 @@ details .tablewrap { margin-bottom: 10px; }
   <p class="eyebrow">Проект 04 · шаги 1, 1b и 1c · синтетические данные, 6 сенсоров · только dev-данные</p>
   <h1>Почему длинные пропуски вредят GRU-прогнозу</h1>
   <p class="lede">Когда показания пропадают длинными блоками, GRU использует старые заполненные значения так, как будто они новые. Нужная информация при этом всё ещё есть во входном окне. Поэтому большая часть лишней ошибки — это сбой модели, а не потеря информации.</p>
-  <nav class="toc"><a href="#problem">1. Задача</a><a href="#ideas">2. Четыре объяснения</a><a href="#method">3. Эксперименты</a><a href="#results">4. Результаты</a><a href="#why">5. Почему GRU этому не учится</a><a href="#beyond">6. Трансформер и реальные данные</a><a href="#conclusion">7. Вывод</a><a href="#next">8. Следующие шаги</a><a href="#details">Таблицы по сидам</a></nav>
+  <nav class="toc"><a href="#problem">1. Задача</a><a href="#ideas">2. Гипотезы</a><a href="#method">3. Эксперименты</a><a href="#results">4. Результаты</a><a href="#why">5. Почему GRU этому не учится</a><a href="#beyond">6. Трансформер и реальные данные</a><a href="#conclusion">7. Вывод</a><a href="#next">8. Следующие шаги</a><a href="#details">Таблицы по сидам</a></nav>
 </header>
 
 <div class="tiles">
@@ -140,8 +140,23 @@ details .tablewrap { margin-bottom: 10px; }
 </section>
 
 <section id="ideas">
-  <h2>2. Четыре возможных объяснения</h2>
-  <p class="prose">Мы записали четыре объяснения до запуска любого эксперимента. Для каждого мы также записали результат, который его опровергает. Они зафиксированы в <code>research/HYPOTHESES.md</code>.</p>
+  <h2>2. Гипотезы: 12 проверок в три шага</h2>
+  <p class="prose">Мы проверили 12 гипотез в три шага. Шаг 1 спрашивает, что идёт не так (H1–H4). Шаг 1b спрашивает, почему GRU не учится это исправлять (H5, H6). Шаг 1c спрашивает, верно ли это для трансформера и на реальных данных (T1–T4, R1, R2). Каждая гипотеза записана вместе с условием опровержения до своего эксперимента. Все они зафиксированы в <code>research/HYPOTHESES.md</code>. Карточки ниже объясняют H1–H4. H5 и H6 объяснены в разделе 5, T1–R2 в разделе 6.</p>
+  <div class="tablewrap"><table class="wtable">
+    <tr><th>Шаг</th><th>ID</th><th>Гипотеза</th><th>Вердикт</th><th>Раздел</th></tr>
+    <tr><td>1</td><td>H1</td><td>Разрыв вызывает старое значение в точке прогноза</td><td><span class="chip mid">Триггер, не причина</span></td><td><a href="#results">4</a></td></tr>
+    <tr><td>1</td><td>H2</td><td>Любая дыра в окне портит память</td><td><span class="chip no">Отвергнута</span></td><td><a href="#results">4</a></td></tr>
+    <tr><td>1</td><td>H3</td><td>Обучение на scatter никогда не показывает старые значения</td><td><span class="chip mid">Наполовину верна</span></td><td><a href="#results">4</a></td></tr>
+    <tr><td>1</td><td>H4</td><td>GRU не использует свежие другие сенсоры</td><td><span class="chip ok">Подтверждена, шире</span></td><td><a href="#results">4</a></td></tr>
+    <tr><td>1b</td><td>H5</td><td>Память GRU забывает, насколько старо значение</td><td><span class="chip mid">Частично верна</span></td><td><a href="#why">5</a></td></tr>
+    <tr><td>1b</td><td>H6</td><td>Таргеты слишком шумные, чтобы научить снижению веса</td><td><span class="chip no">Отвергнута</span></td><td><a href="#why">5</a></td></tr>
+    <tr><td>1c</td><td>T1</td><td>У трансформера тот же сбой модели</td><td><span class="chip ok">Подтверждена</span></td><td><a href="#beyond">6</a></td></tr>
+    <tr><td>1c</td><td>T2</td><td>Трансформер тоже доверяет старым значениям</td><td><span class="chip ok">Подтверждена</span></td><td><a href="#beyond">6</a></td></tr>
+    <tr><td>1c</td><td>T3</td><td>Трансформер хранит «насколько старое», но не использует</td><td><span class="chip no">Отвергнута</span></td><td><a href="#beyond">6</a></td></tr>
+    <tr><td>1c</td><td>T4</td><td>Оптимизатор (Adam или SGD) — не причина</td><td><span class="chip ok">Подтверждена</span></td><td><a href="#beyond">6</a></td></tr>
+    <tr><td>1c</td><td>R1</td><td>Реальные данные: старые окна несут большую часть разрыва</td><td><span class="chip ok">Подтверждена</span></td><td><a href="#beyond">6</a></td></tr>
+    <tr><td>1c</td><td>R2</td><td>Реальные данные: лучшее доверие падает с возрастом, доверие GRU нет</td><td><span class="chip ok">Подтверждена</span></td><td><a href="#beyond">6</a></td></tr>
+  </table></div>
   {{STALE_DIAGRAM}}
   <div class="cards">
     <div class="card"><span class="id">H1 · идея из задания</span><h3>Старое значение в точке прогноза</h3>
