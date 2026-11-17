@@ -109,10 +109,10 @@ details .tablewrap { margin-bottom: 10px; }
 
 <main>
 <header style="display:grid;gap:14px">
-  <p class="eyebrow">Project 04 · Step 1 · synthetic six-sensor data · dev data only</p>
+  <p class="eyebrow">Project 04 · Step 1 and 1b · synthetic six-sensor data · dev data only</p>
   <h1>Why long outages hurt the GRU forecaster</h1>
   <p class="lede">When readings are missing in long blocks, the GRU uses old filled values as if they were new. The information it needs is still in the input window. So most of the extra error is a failure of the model, not a loss of information.</p>
-  <nav class="toc"><a href="#problem">1. Problem</a><a href="#ideas">2. Four explanations</a><a href="#method">3. Experiments</a><a href="#results">4. Results</a><a href="#conclusion">5. Conclusion</a><a href="#next">6. Next steps</a><a href="#details">Per-seed tables</a></nav>
+  <nav class="toc"><a href="#problem">1. Problem</a><a href="#ideas">2. Four explanations</a><a href="#method">3. Experiments</a><a href="#results">4. Results</a><a href="#why">5. Why the GRU does not learn it</a><a href="#conclusion">6. Conclusion</a><a href="#next">7. Next steps</a><a href="#details">Per-seed tables</a></nav>
 </header>
 
 <div class="tiles">
@@ -218,11 +218,55 @@ details .tablewrap { margin-bottom: 10px; }
   </div>
 </section>
 
+<section id="why">
+  <h2>5. Why the GRU does not learn to discount old values</h2>
+  <p class="prose">Sections 1 to 4 show what goes wrong. The GRU trusts an old filled value as much as a fresh one. More training, more units and block training do not fix this. This section asks why. We tested two new explanations, H5 and H6. We wrote their tests and pass marks before we ran them (<code>research/HYPOTHESES.md</code>, Step 1b).</p>
+  <div class="cards">
+    <div class="card"><span class="id">H5 · memory</span><h3>The memory forgets how old a value is</h3>
+      <p>The GRU memory (hidden state, 8 numbers) does not keep the time since the last real reading. When an input stops changing, the memory settles to a fixed state in a few steps. After that, a 3-step-old and a 10-step-old value look the same. A readout cannot discount what the memory does not hold.</p>
+      <p class="test">Wrong if: a simple probe reads "age 3 or more" from the memory with balanced accuracy 0.75 or more, or a new readout on the frozen memory removes half or more of the extra error.</p></div>
+    <div class="card"><span class="id">H6 · learning signal</span><h3>The targets are too noisy to teach the discount</h3>
+      <p>The GRU could learn the discount, but the real targets are noisy. The useful signal for old windows is small next to the noise, so gradient descent does not find it.</p>
+      <p class="test">Wrong if: the same GRU, trained on a clean target with no noise, still keeps more than half of the extra error, or still trusts a 9-step-old value with 0.15 or more.</p></div>
+  </div>
+  <div class="tablewrap"><table class="wtable">
+    <tr><th>Experiment</th><th>What we did</th><th>Why this design</th><th>Tests</th></tr>
+    <tr><td>E6a, probes</td><td>Fit a small linear classifier and a nearest-neighbour classifier on the GRU memory at the origin. Task: is the sensor-0 value 3 or more steps old? Fit on train windows, score on dev windows.</td><td>A probe asks what information the memory holds. Shuffled labels give the guessing level. The raw input window gives the upper limit.</td><td>H5</td></tr>
+    <tr><td>E6b, new readout</td><td>Keep the GRU fixed. Fit a new linear and quadratic readout from its memory to the target.</td><td>If the information is in the memory, a better readout uses it. If not, no readout helps.</td><td>H5</td></tr>
+    <tr><td>E6c, dynamics</td><td>Hold the input fixed and watch the memory settle. Measure the step Jacobian. Also stop sensor 0 for k = 0 to 16 steps and measure the trust in its last value.</td><td>A system that forgets fast cannot count elapsed time. The Jacobian (how much the memory carries over per step) measures how fast it forgets.</td><td>H5</td></tr>
+    <tr><td>E7, clean teacher</td><td>Train the same GRU, same budget and starts, on the Kalman forecast from the same 24 steps instead of the real target. Then add noise back in 4 doses. Also try real targets with old windows shown 5 times as often, and 48 epochs.</td><td>This is distillation: the teacher gives the best answer for each window with no noise. If H6 is right, a clean target teaches the discount.</td><td>H6</td></tr>
+  </table></div>
+  <p class="note">The Kalman teacher uses the true model and only the readings inside the window. No future value enters an input. It is a tool to test learning, not a method we propose.</p>
+
+  <div class="result">
+    <h3>H5: the memory knows that a value is old, but not how old <span class="chip mid">Partly right</span></h3>
+    <p class="prose">A probe tells "age 3 or more" from "age 0 to 2" with balanced accuracy {{PR_SC}} for the scatter-trained GRU and {{PR_MX}} for the mixed-trained GRU. Guessing gives 0.5. By our own pass mark, this part of H5 fails in {{H5A_HITS}} of 3 seeds for the mixed-trained GRU. But this task is easy: the input mask already says "missing now" for any age of 1 or more.</p>
+    <p class="prose">So we added a harder probe after the first run. Among old windows only, is the value 3 or more steps old, or only 1 to 2? The input window answers this with accuracy {{PW_IN}}. The GRU memory answers with only {{PW}}. The memory keeps "old or not" and loses "how old".</p>
+    {{PROBE_CHART}}
+    <p class="prose">The dynamics show why. When the input is held fixed, each step of change in the memory is {{STEP_RATIO}} times the step before. The Jacobian has a largest eigenvalue of {{RADIUS}} (1 would mean perfect memory). So the memory settles in about 3 to 5 steps. The number of held steps k can be read back from the memory with R² of {{K_R2}} at most.</p>
+    <p class="prose">The chart below shows the effect on the forecast. When sensor 0 stops, the Kalman filter trusts its last value less every step ({{HELD_KF}}). The GRU trusts it more ({{HELD_GRU}}), and the curve is flat after about 3 steps. This is exactly what a memory that has settled would do.</p>
+    {{HELD_CHART}}
+    <p class="prose">A new readout does not help. We kept the mixed-trained GRU fixed and fit a new linear or quadratic readout from its memory. It removes at most {{REMOVED_MAX}} of the extra error on old windows. In {{N_WORSE}} of {{N_REFIT}} cases (3 seeds, 2 readouts) it makes the error larger. So the readout is not the problem. The needed information is not in the memory.</p>
+    {{REFIT_CHART}}
+  </div>
+
+  <div class="result">
+    <h3>H6: a clean target does not teach the discount <span class="chip no">Rejected</span></h3>
+    <p class="prose">Trained on the clean Kalman target, the GRU keeps {{T0_RATIO}} of the extra error of the real-target GRU. H6 needed 0.5 or less. Its trust in a 9-step-old value stays at {{T0_SENS9}}. The Kalman filter gives such a value {{KF9}}. Both pass marks fail in 3 of 3 seeds. So target noise is not the reason.</p>
+    {{RATIO_CHART}}
+    <p class="prose">Two checks did not work as planned, and we report them. First, the noise doses do not give a clean trend. From no noise to full noise, the extra error on old windows changes per seed as {{DOSE}}. It goes up in two seeds and down in one. Second, the teacher with full noise (a = 1) should match the real targets, but it gives {{A1_RATIO}} of their excess. The noise size is right, but real errors of neighbouring windows are correlated (lag-1 correlation {{ACORR}}), and our added noise is not. The H6 verdict does not depend on these checks: the clean teacher also keeps {{T0_VS_T1}} of the error of the noisy teacher, in the same setup.</p>
+    <p class="prose">Showing old windows 5 times as often is the most telling result. It lowers trust in sensor 0 at every age, also at age 0 ({{O5_SENS0}}, against {{REAL_SENS0}} with real targets). The extra error on fresh windows goes up in 3 of 3 seeds (real targets → old windows 5x: {{FRESH_SHIFT}}). The GRU moves one fixed weight down. It does not learn a weight that depends on age.</p>
+    {{E7_SENS_CHART}}
+    <p class="prose">More training starts to help a little. At 48 epochs the trust curve begins to bend down with age (trust at age 9+ is {{E48_SENS9}}). But the GRU still keeps {{E48_RATIO}} of the extra error. Learning the discount is possible but very slow for this GRU.</p>
+  </div>
+</section>
+
 <section id="conclusion">
-  <h2>5. Conclusion</h2>
+  <h2>6. Conclusion</h2>
   <div class="claim">
     <p><strong>Mechanism: stale-fill trust.</strong> Forward fill makes an outage look like a normal, constant reading. The GRU uses this filled value with the same weight as a fresh value. The best forecast gives it less weight as it gets older.</p>
     <p>Scatter training almost never shows values older than 2 steps, so the GRU never needed this rule. The age information is in the input, but this small GRU does not turn it into a discount at this training budget. Block training at the same budget does not change that.</p>
+    <p><strong>Why (Step 1b).</strong> The GRU memory settles within a few steps when an input stops changing. It keeps "this value is old" but forgets "how old". No readout can recover the discount from it. A clean target does not teach it either. With more old windows, the GRU only lowers one fixed weight for all ages. A discount that depends on age needs a multiplication of value and age, and this GRU learns that very slowly.</p>
   </div>
   <div class="tablewrap"><table class="wtable">
     <tr><th>ID</th><th>Explanation</th><th>Verdict</th><th>Key evidence</th></tr>
@@ -230,6 +274,8 @@ details .tablewrap { margin-bottom: 10px; }
     <tr><td>H2</td><td>Lost history</td><td><span class="chip no">Rejected</span></td><td>An outage 8 or 16 steps before the origin costs about 0 (3 of 3 seeds).</td></tr>
     <tr><td>H3</td><td>Never seen in training</td><td><span class="chip mid">Half right</span></td><td>{{EXCESS_RANGE}} of the gap is model failure. Block training does not teach the GRU to trust old values less.</td></tr>
     <tr><td>H4</td><td>No help from other sensors</td><td><span class="chip ok">Holds, wider</span></td><td>Outages on the 5 other sensors cost the GRU {{OTHERS_GRU}} MSE and the Kalman filter {{OTHERS_KF}}.</td></tr>
+    <tr><td>H5</td><td>The memory forgets how old a value is</td><td><span class="chip mid">Partly right</span></td><td>"Old or not" is in the memory ({{PR_MX}}), "how old" mostly is not ({{PW}} against {{PW_IN}} from the input). Largest Jacobian eigenvalue {{RADIUS}}. A new readout removes at most {{REMOVED_MAX}} of the extra error.</td></tr>
+    <tr><td>H6</td><td>Targets too noisy to learn from</td><td><span class="chip no">Rejected</span></td><td>A clean teacher keeps {{T0_RATIO}} of the extra error. Trust at age 9+ stays {{T0_SENS9}} (3 of 3 seeds).</td></tr>
   </table></div>
   <h3>Limits</h3>
   <ul class="prose">
@@ -237,6 +283,7 @@ details .tablewrap { margin-bottom: 10px; }
     <li>Only the 8-unit starter GRU was tested, and one larger version (32 units, 4 times more training).</li>
     <li>Three data seeds. The old-value results rest on about 21 to 23 outages per seed.</li>
     <li>The Kalman filter knows the true model. It shows that the information is in the window. It does not show that a learned model can reach its error.</li>
+    <li>The probes are simple (linear and nearest neighbour). A more complex probe could find more age information in the memory. The "how old" probe was added after the first run.</li>
   </ul>
 </section>
 
@@ -245,8 +292,8 @@ details .tablewrap { margin-bottom: 10px; }
   <ol class="steps">
     <li><b>Step 2: prove the mechanism directly</b>
       <span>Keep the age of the old value the same and change only the value. Replace it with the Kalman estimate. If the extra GRU error goes away, stale-fill trust is confirmed. If it stays, the memory of the GRU is the problem.</span></li>
-    <li><b>Step 3: one targeted change to the model</b>
-      <span>Multiply each filled value by a learned decay, (fill − mean) · exp(−γ<sub>j</sub> · age<sub>j</sub>). This is the input decay of GRU-D (Che et al. 2018), so the module itself is known. The new part is the test: with the same budget, does the trust curve go down with age, and does the old-value error drop?</span></li>
+    <li><b>Step 3: test the missing multiplication directly</b>
+      <span>Step 1b shows that the GRU cannot easily form value × f(age). Give it this product as a fixed input: (fill − mean) · exp(−γ<sub>j</sub> · age<sub>j</sub>). This is the input decay of GRU-D (Che et al. 2018), so the module itself is known. The new part is the test: at the same budget, does the trust curve now follow the Kalman curve, and does the old-window error drop where a clean teacher, more old windows and a new readout did not?</span></li>
     <li><b>Step 3 alternative: a reliability score</b>
       <span>Predict the extra error of each window from how much the forecast depends on each value and how old that value is. Check on dev data if it finds bad windows better than the sensor-0 age alone.</span></li>
     <li><b>A limit that already holds</b>
@@ -301,6 +348,18 @@ details .tablewrap { margin-bottom: 10px; }
       {{FACTORIAL_ROWS}}
     </table></div>
     <p class="note">RMSE, with the change against the all-scatter cell under each value. The ridge model is a simple learned reference. It does not beat the GRU in a consistent way.</p></details>
+  <details><summary>E6: probes, new readout, dynamics</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Seed</th><th>GRU</th><th>Probe: old or not, linear</th><th>kNN</th><th>Probe: how old, linear</th><th>Age R² (old windows)</th><th>GRU MSE, age 3+</th><th>New readout, own windows</th><th>New readout, mixed windows</th><th>Quadratic, mixed</th><th>Kalman (24 steps)</th><th>Jacobian eigenvalue</th><th>Held steps R²</th></tr>
+      {{E6_ROWS}}
+    </table></div>
+    <p class="note">Probe values are balanced accuracy, mean of 5 starts (0.5 = guessing). Readout values are MSE on dev block windows with sensor-0 age 3 or more. A negative R² means worse than a constant guess.</p></details>
+  <details><summary>E7: clean teacher, noise doses, old windows 5x, 48 epochs</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Seed</th><th>Training target</th><th>Scatter RMSE</th><th>Block RMSE</th><th>Extra error, age 3+</th><th>Extra error, age 0</th><th>Relative to real targets</th><th>Trust at age 0 / 9+</th></tr>
+      {{E7_ROWS}}
+    </table></div>
+    <p class="note">Extra error = GRU MSE minus Kalman (24 steps) MSE on the same dev block windows. Range over 5 starts in small text. All arms use mixed-mask train windows and 12 epochs unless marked.</p></details>
   <details><summary>Reproduce</summary>
   <pre>P=miniconda3/envs/proteinttt/bin/python   # base env numpy is broken
 export OMP_NUM_THREADS=1                   # without it, each run is about 20x slower
@@ -308,7 +367,8 @@ $P check_data.py && $P research/test_research.py
 $P research/e0_baseline_exposure.py && $P research/e1_age_stratified.py
 $P research/e2_block_position.py && $P research/e3_window_oracle.py
 $P research/e4_training_masks.py && $P research/e4b_budget_capacity.py
-$P research/e5_cross_sensor.py && $P report/build_report.py</pre>
+$P research/e5_cross_sensor.py && $P research/e6_representation.py
+$P research/e7_distillation.py && $P report/build_report.py</pre>
   <p class="note">CPU only. The full set takes about 1 minute on 64 cores.</p></details>
 </section>
 </main>

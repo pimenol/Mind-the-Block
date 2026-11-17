@@ -16,10 +16,20 @@ def by_seed(name):
 
 E0, E1, E2, E3 = by_seed('e0_baseline_exposure'), by_seed('e1_age_stratified'), by_seed('e2_block_position'), by_seed('e3_window_oracle')
 E4, E4B, E5 = by_seed('e4_training_masks'), by_seed('e4b_budget_capacity'), by_seed('e5_cross_sensor')
+E6, E7 = by_seed('e6_representation'), by_seed('e7_distillation')
 
-COL = {'gru': 'var(--s1)', 'kalman': 'var(--s2)', 'persistence': 'var(--s3)', 'gru_block': 'var(--s4)', 'gru_big': 'var(--s5)'}
+COL = {'gru': 'var(--s1)', 'kalman': 'var(--s2)', 'persistence': 'var(--s3)', 'gru_block': 'var(--s4)', 'gru_big': 'var(--s5)',
+       'gru_mixed': 'var(--s4)', 'probe_sc': 'var(--s1)', 'probe_mx': 'var(--s4)', 'probe_ctrl': 'var(--muted)',
+       'probe_in': 'var(--s3)', 'refit_lin': 'var(--s3)', 'refit_quad': 'var(--s5)',
+       'seed940': 'var(--s1)', 'seed941': 'var(--s3)', 'seed942': 'var(--s4)',
+       'teach': 'var(--s1)', 'over5': 'var(--s3)', 'teach48': 'var(--s5)'}
 NAME = {'gru': 'GRU (learned model)', 'kalman': 'Kalman filter (best possible)', 'persistence': 'Persistence (repeat last value)',
-        'gru_block': 'GRU, block-trained', 'gru_big': 'GRU, block-trained, 4x steps, 32 units'}
+        'gru_block': 'GRU, block-trained', 'gru_big': 'GRU, block-trained, 4x steps, 32 units',
+        'gru_mixed': 'GRU, mixed-trained, real targets', 'probe_sc': 'Memory of scatter-trained GRU',
+        'probe_mx': 'Memory of mixed-trained GRU', 'probe_ctrl': 'Control: shuffled labels',
+        'probe_in': 'Input window (upper limit)', 'refit_lin': 'New linear readout', 'refit_quad': 'New quadratic readout',
+        'seed940': 'Seed 940', 'seed941': 'Seed 941', 'seed942': 'Seed 942',
+        'teach': 'GRU, clean teacher', 'over5': 'GRU, old windows 5x', 'teach48': 'GRU, clean teacher, 48 epochs'}
 
 
 def f(x, d=3):
@@ -402,6 +412,139 @@ def rng(vals, d=3):
   return f'{min(vals):.{d}f} to {max(vals):.{d}f}'
 
 
+# ---------------------------------------------------------------- Step 1b: E6 (H5) and E7 (H6)
+def m_(xs):
+  return float(np.mean(xs))
+
+def probe(s, arm, key, part='probe'):
+  return m_([p[key] for p in E6[s]['arms'][arm][part]])
+
+probe_groups = [
+    ('Old or not?', {'probe_sc': m_([probe(s, 'scatter/zero', 'linear') for s in SEEDS]),
+                     'probe_mx': m_([probe(s, 'mixed/zero', 'linear') for s in SEEDS]),
+                     'probe_ctrl': m_([probe(s, 'scatter/zero', 'linear_control') for s in SEEDS]),
+                     'probe_in': m_([E6[s]['input_ceiling']['linear'] for s in SEEDS])}),
+    ('How old?', {'probe_sc': m_([probe(s, 'scatter/zero', 'linear', 'probe_within_stale') for s in SEEDS]),
+                  'probe_mx': m_([probe(s, 'mixed/zero', 'linear', 'probe_within_stale') for s in SEEDS]),
+                  'probe_ctrl': m_([probe(s, 'scatter/zero', 'linear_control', 'probe_within_stale') for s in SEEDS]),
+                  'probe_in': m_([E6[s]['input_ceiling_within_stale']['linear'] for s in SEEDS])}),
+]
+probe_chart = hbar_groups('probe', 'H5: can a simple probe read the age of sensor 0 from the GRU memory? (balanced accuracy, 0.5 = guessing, mean of 3 seeds)',
+                          probe_groups, ['probe_sc', 'probe_mx', 'probe_ctrl', 'probe_in'], 'balanced accuracy', w=640, row=22)
+
+holds = [c['k'] for c in E6[940]['arms']['scatter/zero']['held_sensor0']['curve']]
+def held(s, arm, key):
+  return [c[key] for c in E6[s]['arms'][arm]['held_sensor0']['curve']]
+held_series = [
+    ('kalman', NAME['kalman'], list(np.mean([held(s, 'scatter/zero', 'kalman_sensitivity') for s in SEEDS], 0))),
+    ('gru', 'GRU, scatter-trained', list(np.mean([held(s, 'scatter/zero', 'gru_sensitivity') for s in SEEDS], 0))),
+    ('gru_mixed', 'GRU, mixed-trained', list(np.mean([held(s, 'mixed/zero', 'gru_sensitivity') for s in SEEDS], 0))),
+]
+held_chart = line_chart('held', 'H5: trust in the sensor-0 value after it stops updating for k steps (same windows, mean of 3 seeds)',
+                        holds, [str(k) for k in holds], held_series,
+                        ('k = steps since the last real sensor-0 reading', 'trust (forecast change per unit)'), ymin=0, w=640, h=300)
+
+def refit_cell(s, key):
+  return m_([c[key] for c in E6[s]['arms']['mixed/zero']['refit']])
+refit_groups = [(f'Seed {s}', {'gru_mixed': refit_cell(s, 'gru_stale'), 'refit_lin': refit_cell(s, 'mixed_linear_stale'),
+                               'refit_quad': refit_cell(s, 'mixed_quadratic_stale'), 'kalman': E6[s]['window_oracle_mse']['stale']})
+                for s in SEEDS]
+refit_chart = hbar_groups('refit', 'H5: error on old windows (age 3+) with a new readout on the frozen GRU memory (MSE)',
+                          refit_groups, ['gru_mixed', 'refit_lin', 'refit_quad', 'kalman'], 'MSE on block windows with sensor-0 age 3 or more', w=640, row=22)
+
+E7_ARMS = [('teach0.0', 'Clean teacher'), ('teach1.0', 'Teacher + noise (a = 1)'), ('over5', 'Old windows 5x'),
+           ('real_e48', 'Real targets, 48 epochs'), ('teach0.0_e48', 'Clean teacher, 48 epochs')]
+ratio_groups = [(lab, {f'seed{s}': E7[s]['arms'][a]['excess_vs_real'] for s in SEEDS}) for a, lab in E7_ARMS]
+ratio_chart = hbar_groups('ratio', 'H6: extra error on old windows, relative to the GRU trained on real targets (1 = no change, H6 needed 0.5 or less)',
+                          ratio_groups, ['seed940', 'seed941', 'seed942'], 'excess over the Kalman filter, divided by the real-target excess', w=640, row=20)
+
+def e7sens(s, arm):
+  return [x['value'] for x in E7[s]['arms'][arm]['sensitivity_s0']]
+e7_sens_series = [
+    ('kalman', NAME['kalman'], list(np.mean([[x['value'] for x in E4[s]['kalman_sensitivity']] for s in SEEDS], 0))),
+    ('gru_mixed', 'GRU, real targets', list(np.mean([e7sens(s, 'real') for s in SEEDS], 0))),
+    ('teach', NAME['teach'], list(np.mean([e7sens(s, 'teach0.0') for s in SEEDS], 0))),
+    ('over5', NAME['over5'], list(np.mean([e7sens(s, 'over5') for s in SEEDS], 0))),
+    ('teach48', NAME['teach48'], list(np.mean([e7sens(s, 'teach0.0_e48') for s in SEEDS], 0))),
+]
+e7_sens_chart = line_chart('e7sens', 'H6: trust in the last sensor-0 value by its age, for each training change (mean of 3 seeds)',
+                           list(range(len(bins))), bins, e7_sens_series,
+                           ('age of the sensor-0 value at the forecast origin (steps)', 'trust (forecast change per unit)'), ymin=0, w=640, h=320, direct=False)
+
+def e6_table():
+  rows = []
+  for s in SEEDS:
+    for arm, lab in [('scatter/zero', 'scatter-trained'), ('mixed/zero', 'mixed-trained'), ('scatter/age', 'scatter-trained, age input')]:
+      a = E6[s]['arms'][arm]
+      ref = a['refit']
+      fp = a['fixed_point']
+      rows.append(f"<tr><td>{s}</td><td>{lab}</td><td>{f(probe(s, arm, 'linear'))}</td><td>{f(probe(s, arm, 'knn'))}</td>"
+                  f"<td>{f(probe(s, arm, 'linear', 'probe_within_stale'))}</td><td>{f(m_(a['age_r2_stale']), 2)}</td>"
+                  f"<td>{f(m_([c['gru_stale'] for c in ref]))}</td><td>{f(m_([c['own_linear_stale'] for c in ref]))}</td>"
+                  f"<td>{f(m_([c['mixed_linear_stale'] for c in ref]))}</td><td>{f(m_([c['mixed_quadratic_stale'] for c in ref]))}</td>"
+                  f"<td>{f(E6[s]['window_oracle_mse']['stale'])}</td><td>{f(m_([x['radius_median'] for x in fp]), 2)}</td>"
+                  f"<td>{f(a['held_sensor0']['k_decode_r2'], 2)}</td></tr>")
+    ic, iw = E6[s]['input_ceiling'], E6[s]['input_ceiling_within_stale']
+    rows.append(f"<tr><td>{s}</td><td>input window</td><td>{f(ic['linear'])}</td><td>{f(ic['knn'])}</td><td>{f(iw['linear'])}</td>"
+                + '<td>–</td>' * 8 + '</tr>')
+  return ''.join(rows)
+
+def e7_table():
+  rows = []
+  for s in SEEDS:
+    r = E7[s]
+    for arm, lab in [('real', 'Real targets')] + [(f'teach{a}', f'Teacher, a = {a:g}') for a in [0., .25, .5, 1.]] + E7_ARMS[2:]:
+      a = r['arms'][arm]
+      rows.append(f"<tr><td>{s}</td><td>{lab}</td><td>{f(a['rmse_scatter']['mean'])}</td><td>{f(a['rmse_block']['mean'])}</td>"
+                  f"<td>{f(a['excess_stale']['mean'])}<span class=\"d\">{f(a['excess_stale']['min'])} to {f(a['excess_stale']['max'])}</span></td>"
+                  f"<td>{f(a['excess_fresh']['mean'])}</td><td>{f(a['excess_vs_real'], 2)}</td>"
+                  f"<td>{f(a['sensitivity_s0'][0]['value'], 2)} / {f(a['sensitivity_s0'][-1]['value'], 2)}</td></tr>")
+  return ''.join(rows)
+
+# Numbers for the text.
+pr_sc = [probe(s, 'scatter/zero', 'linear') for s in SEEDS]
+pr_mx = [probe(s, 'mixed/zero', 'linear') for s in SEEDS]
+pr_sel = [probe(s, a, 'linear') - probe(s, a, 'linear_control') for s in SEEDS for a in ['scatter/zero', 'mixed/zero']]
+h5a_hits = sum(probe(s, 'mixed/zero', 'linear') >= .75 for s in SEEDS)
+pw = [probe(s, a, 'linear', 'probe_within_stale') for s in SEEDS for a in ['scatter/zero', 'mixed/zero']]
+pw_in = [E6[s]['input_ceiling_within_stale']['linear'] for s in SEEDS]
+radius = [m_([x['radius_median'] for x in E6[s]['arms'][a]['fixed_point']]) for s in SEEDS for a in E6[940]['arms']]
+k_r2 = [E6[s]['arms'][a]['held_sensor0']['k_decode_r2'] for s in SEEDS for a in ['scatter/zero', 'mixed/zero']]
+step_ratio = [m_([x['step_norm'][1] / x['step_norm'][0] for x in E6[s]['arms'][a]['fixed_point']]) for s in SEEDS for a in E6[940]['arms']]
+removed = []
+for s in SEEDS:
+  g = refit_cell(s, 'gru_stale'); o = E6[s]['window_oracle_mse']['stale']
+  removed += [(g - refit_cell(s, k)) / (g - o) for k in ['mixed_linear_stale', 'mixed_quadratic_stale']]
+held_gru0 = held_series[1][2][0]; held_gru16 = held_series[1][2][-1]
+held_kf0 = held_series[0][2][0]; held_kf16 = held_series[0][2][-1]
+t0_ratio = [E7[s]['arms']['teach0.0']['excess_vs_real'] for s in SEEDS]
+t0_sens9 = [E7[s]['arms']['teach0.0']['sensitivity_s0'][-1]['value'] for s in SEEDS]
+t0_vs_t1 = [E7[s]['arms']['teach0.0']['excess_stale']['mean'] / E7[s]['arms']['teach1.0']['excess_stale']['mean'] for s in SEEDS]
+a1_ratio = [E7[s]['arms']['teach1.0']['excess_vs_real'] for s in SEEDS]
+acorr = [E7[s]['residual_autocorr']['lag1'] for s in SEEDS]
+o5_sens0 = [E7[s]['arms']['over5']['sensitivity_s0'][0]['value'] for s in SEEDS]
+real_sens0 = [E7[s]['arms']['real']['sensitivity_s0'][0]['value'] for s in SEEDS]
+o5_fresh = [E7[s]['arms']['over5']['excess_fresh']['mean'] for s in SEEDS]
+real_fresh = [E7[s]['arms']['real']['excess_fresh']['mean'] for s in SEEDS]
+o5_ratio = [E7[s]['arms']['over5']['excess_vs_real'] for s in SEEDS]
+assert all(a > b for a, b in zip(o5_fresh, real_fresh)) and all(a < b for a, b in zip(o5_sens0, real_sens0))
+e48_ratio = [E7[s]['arms'][a]['excess_vs_real'] for s in SEEDS for a in ['real_e48', 'teach0.0_e48']]
+e48_sens9 = [E7[s]['arms'][a]['sensitivity_s0'][-1]['value'] for s in SEEDS for a in ['real_e48', 'teach0.0_e48']]
+kf9 = [E4[s]['kalman_sensitivity'][-1]['value'] for s in SEEDS]
+assert all(r > .5 for r in t0_ratio) and all(v >= .15 for v in t0_sens9)  # H6 falsifier, as registered
+
+def per_seed_arrow(a_vals, b_vals, d=3):
+  return ', '.join(f'{s}: {a:.{d}f} → {b:.{d}f}' for s, a, b in zip(SEEDS, a_vals, b_vals))
+
+dose = per_seed_arrow([E7[s]['arms']['teach0.0']['excess_stale']['mean'] for s in SEEDS],
+                      [E7[s]['arms']['teach1.0']['excess_stale']['mean'] for s in SEEDS])
+fresh_shift = per_seed_arrow(real_fresh, o5_fresh)
+n_worse = sum(r < 0 for r in removed)
+
+def pct(vals):
+  return f'{100 * min(vals):.0f}% to {100 * max(vals):.0f}%'
+
+
 html = (ROOT / 'report' / 'template.html').read_text()
 subs = {
     'EXPOSURE_ROWS': exposure_table(), 'BASELINE_ROWS': baseline_table(), 'FRESH_STALE_ROWS': fresh_stale_table(),
@@ -413,6 +556,16 @@ subs = {
     'ORACLE_RANGE': f'{min(oracle_share):.0f}% to {max(oracle_share):.0f}%',
     'OTHERS_GRU': rng(others_gru), 'OTHERS_KF': rng(others_kf), 'S0_GRU': rng(s0_gru), 'S0_KF': rng(s0_kf),
     'AGE_VS_ZERO': f'{age_vs_zero:.4f}', 'FAC_SHARE': fac_share,
+    'PROBE_CHART': probe_chart, 'HELD_CHART': held_chart, 'REFIT_CHART': refit_chart, 'RATIO_CHART': ratio_chart,
+    'E7_SENS_CHART': e7_sens_chart, 'E6_ROWS': e6_table(), 'E7_ROWS': e7_table(),
+    'PR_SC': rng(pr_sc, 2), 'PR_MX': rng(pr_mx, 2), 'PR_SEL': rng(pr_sel, 2), 'H5A_HITS': str(h5a_hits),
+    'PW': rng(pw, 2), 'PW_IN': rng(pw_in, 2), 'RADIUS': rng(radius, 2), 'K_R2': f(max(k_r2), 2),
+    'STEP_RATIO': rng(step_ratio, 2), 'REMOVED_MAX': f'{100 * max(removed):.0f}%',
+    'HELD_GRU': f'{held_gru0:.2f} → {held_gru16:.2f}', 'HELD_KF': f'{held_kf0:.2f} → {held_kf16:.2f}',
+    'T0_RATIO': rng(t0_ratio, 2), 'T0_SENS9': rng(t0_sens9, 2), 'T0_VS_T1': rng(t0_vs_t1, 2), 'A1_RATIO': rng(a1_ratio, 2),
+    'ACORR': rng(acorr, 2), 'O5_SENS0': rng(o5_sens0, 2), 'REAL_SENS0': rng(real_sens0, 2), 'O5_RATIO': rng(o5_ratio, 2),
+    'O5_FRESH': rng(o5_fresh), 'REAL_FRESH': rng(real_fresh), 'E48_RATIO': rng(e48_ratio, 2), 'E48_SENS9': rng(e48_sens9, 2),
+    'KF9': rng(kf9, 2), 'DOSE': dose, 'FRESH_SHIFT': fresh_shift, 'N_WORSE': str(n_worse), 'N_REFIT': str(len(removed)),
     'KF_SENS_0': f(kf_sens[0], 2), 'KF_SENS_9': f(kf_sens[-1], 2), 'GRU_SENS_0': f(gru_sens[0], 2), 'GRU_SENS_9': f(gru_sens[-1], 2),
 }
 for k, v in subs.items():

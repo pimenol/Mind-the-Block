@@ -59,9 +59,10 @@ count, a result must separate two explanations that make different predictions.
 
 ## Status
 
-Step 1 (mechanism) is done, commits "Step 1a" to "Step 1h". Step 2 (a targeted
-training change, a reliability diagnostic, or a scoped limit) and the frozen
-final evaluation are not started.
+Step 1 (mechanism) is done, commits "Step 1a" to "Step 1h". Step 1b (why the
+GRU does not learn age discounting, H5 and H6, E6 and E7) is done. Step 2 (a
+targeted training change, a reliability diagnostic, or a scoped limit) and the
+frozen final evaluation are not started.
 
 Step 1 claim (dev only, 3 of 3 seeds): 52% to 90% of the scatter-trained GRU's
 block-minus-scatter MSE gap is model failure, not lost information. The trigger
@@ -74,13 +75,16 @@ cause is that the forecast does not discount a held value by its age.
 | H2 | Lost temporal context anywhere in the window | Rejected. An outage that ends 8 or 16 steps before the origin costs about 0 MSE. |
 | H3 | Training-support shortcut (scatter training never shows stale fills) | Half right. Block or mixed training at the same budget does not remove the stale-origin loss. |
 | H4 | Cross-sensor substitution failure | Holds, but wider. Outages on the 5 other sensors also cost the GRU much more than the oracle. |
+| H5 | The hidden state forgets how old a value is | Partly right. Probes read "old or not" (0.71 to 0.81) but not "how old" (0.64 to 0.69, input 0.99 to 1.00). Jacobian radius 0.59 to 0.65. A new readout on frozen h removes at most 1% of the stale excess. |
+| H6 | Targets too noisy to learn the discount | Rejected (3 of 3). A clean window-oracle teacher keeps 0.81 to 1.07 of the stale excess. Oversampling stale windows lowers one fixed weight at all ages. |
 
 Numbers that later steps build on:
 
 - Kalman sensitivity to the last sensor-0 reading drops from 0.32 at age 0 to
   0.01 at age 9+. The GRU sensitivity goes from 0.21 to 0.28.
-- The age input changes block RMSE by at most 0.0003. More epochs (48) and more
-  units (32) do not create age gating (E4b).
+- The age input changes block RMSE by at most 0.0003. At 48 epochs the trust
+  curve starts to bend down with age (E4b, E7), but 58% to 90% of the stale
+  excess remains (E7). Learning the discount is possible but very slow.
 - Block masks make sensor 0 stale at the origin in about 1 in 5 windows, scatter
   masks in about 1 in 50. The stale bins come from only 21 to 23 distinct
   outages per seed, so the controlled intervention E2 is the clean estimate.
@@ -115,6 +119,8 @@ python research/e3_window_oracle.py        # E3: 24-step window oracle, distinct
 python research/e4_training_masks.py       # E4: scatter / block / mixed training, stale-value sensitivity
 python research/e4b_budget_capacity.py     # E4b: epochs x hidden units (12, 48) x (8, 32)
 python research/e5_cross_sensor.py         # E5: 2x2 sensor factorial mask and ridge reference
+python research/e6_representation.py      # E6: probes on h, readout refit, fixed-point dynamics
+python research/e7_distillation.py         # E7: window-oracle teacher, noise doses, stale oversampling, 48 epochs
 python report/build_report.py              # results/*.json + report/template.html -> report/report.html
 ```
 
@@ -149,6 +155,8 @@ BLAS thread variables to 1. If you run on a login node, reduce `procs` in
 - `get_model` trains a GRU or loads it from the cache in `results/models/`. The
   file name is `{seed}_{train_kind}_{mode}_{init}[_e{epochs}_h{hidden}].npz`.
   `init=0` reproduces the starter exactly. The cache is not in git.
+  `cached_model(name, build)` does the same for custom arms (E7 uses
+  `{seed}_mixed_zero_{init}_{arm}.npz`).
 - `oracle.py` is the Bayes-optimal reference: generator replay (`recover`), a
   full-history Kalman filter (`kalman_forecast`), and a filter restarted per
   window (`batched_restart`). It skips missing readings.
@@ -187,7 +195,7 @@ starter.py, check_data.py, generate_data.py   # shipped starter (hashed in MANIF
 VALIDATION.json                               # reference numbers for the standard runs
 data/synthetic_{940,941,942}.npz              # {train,dev,test}_{observed,natural_missing,target}, 2800/1000/1000
 data/metadata.json
-research/                                     # hypotheses, helpers, oracle, tests, experiments E0-E5
+research/                                     # hypotheses, helpers, oracle, tests, experiments E0-E7
 results/eN_*.json                             # one file per experiment, committed
 results/models/                               # GRU weight cache (gitignored)
 report/template.html, build_report.py         # report source

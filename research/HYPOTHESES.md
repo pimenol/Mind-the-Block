@@ -41,3 +41,12 @@ The window oracle is a teacher for a diagnostic only. It uses the true generator
 |---|---|---|
 | E6 | H5 | Staleness probes on h (linear, kNN, shuffled control, age-input GRU as positive control). Readout refit on frozen h in three cells. Fixed-point relaxation with all inputs held, Jacobian spectral radius, and the forecast under a held sensor 0. |
 | E7 | H6 | Distillation from the window oracle with a noise dose-response, a stale-oversampling arm with real targets, and 48-epoch controls. |
+
+### Step 1b post-hoc additions (2026-11-17, written after the first E6 and E7 runs)
+
+These analyses were added after seeing results. They do not change the falsifiers above.
+
+- E6: a second probe among stale windows only (age0 >= 1), age0 >= 3 vs 1-2. The registered probe (age0 >= 3 vs < 3) can use the last-step mask bit, so it does not separate "old or not" from "how old".
+- E7: the lag-1, 3 and 6 autocorrelation of the real residual (target minus teacher) on train windows. It explains why the a = 1 arm does not match the real-target arm in 2 of 3 seeds.
+
+Verdicts by the registered criteria: H5 (a) is met for the falsifier in 2 of 3 seeds (mixed-trained probe >= 0.75), (b) and (c) hold in 3 of 3 seeds, so H5 is partly right. H6 is falsified in 3 of 3 seeds.
