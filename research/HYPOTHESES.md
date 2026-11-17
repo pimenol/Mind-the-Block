@@ -50,3 +50,25 @@ These analyses were added after seeing results. They do not change the falsifier
 - E7: the lag-1, 3 and 6 autocorrelation of the real residual (target minus teacher) on train windows. It explains why the a = 1 arm does not match the real-target arm in 2 of 3 seeds.
 
 Verdicts by the registered criteria: H5 (a) is met for the falsifier in 2 of 3 seeds (mixed-trained probe >= 0.75), (b) and (c) hold in 3 of 3 seeds, so H5 is partly right. H6 is falsified in 3 of 3 seeds.
+
+## Step 1c (2026-11-17): does the mechanism hold beyond the 8-unit GRU and beyond synthetic data?
+
+Written before running E8 and E9. The falsifiers are fixed here. Step 1b found that the GRU memory settles in a few steps and keeps "old or not" but not "how old" (H5 partly right), and that a clean teacher does not teach the discount (H6 rejected). Step 1c asks two questions. First, is the failure specific to a recurrent memory? A transformer reads every step directly and has no settling memory. If settling (H5) were the main cause, a transformer would discount old values. Second, does the failure appear on real data with natural outages?
+
+New models use PyTorch (CPU) and live only in `research/`. The starter and the NumPy GRU are not changed.
+
+| ID | Claim | Falsified if |
+|---|---|---|
+| T1 | A small transformer (2 layers, 2 heads, width 32, last-token readout, Adam, same train windows and the same 12 x 1600 budget) shows the same failure on synthetic data: its excess over the 24-step window oracle is >= 50% of its block-minus-scatter MSE gap. | Excess share < 50% in 2 of 3 seeds. |
+| T2 | The transformer's trust in the last sensor-0 value does not fall with age: `e4.gru_sensitivity` at age 9+ >= 0.15 (the Kalman value is about 0.01). | Trust at age 9+ < 0.15 in 2 of 3 seeds. |
+| T3 (tests H5 as the cause) | If T1 and T2 hold, a settling memory is not needed for the failure. The transformer's final representation holds "how old" (linear probe, stale windows only, age0 >= 3 vs 1-2) with balanced accuracy >= 0.85, but its trust curve stays flat. The information is present and unused. | Probe < 0.85 in 2 of 3 seeds. Then the transformer also drops the age, and the representation account stays open. |
+| T4 (optimizer control) | A PyTorch GRU (8 units, Adam, same data and budget) behaves like the NumPy GRU (plain SGD with clipping): trust at age 9+ >= 0.15. So a transformer difference is due to the architecture, not the optimizer. | Torch GRU trust at age 9+ < 0.15 in 2 of 3 seeds. Then the optimizer is a lever by itself. |
+| R1 | Real data (UCI Beijing Multi-Site Air Quality, PM2.5 at 6 stations, hourly, 24-step window, 6-step horizon): for the scatter-trained GRU, windows with the target station 3 or more steps stale at the origin carry >= 50% of the block-minus-scatter MSE gap (gap summed over windows). | < 50% in 2 of 3 target stations. |
+| R2 | On the real data, an age-aware linear reference (ridge on train, last observed value of each station x one-hot age bin) gives a weight on the target station's last value that falls with age, and the scatter-trained GRU trust curve does not fall. | The reference weight does not fall from age 0 to age 9+. Then trusting a stale value is close to right on this data. This is reported as a limit, not as support. |
+
+On real data there is no true model, so no oracle. The ridge reference is a learned model, not a lower bound. Replication on real data uses 3 target stations, each with 5 GRU or transformer inits. The real test period (the last 6 months) is never loaded.
+
+| ID | Tests | Design |
+|---|---|---|
+| E8 | T1-T4, H2-H6 on a transformer | Transformer and torch GRU on the synthetic seeds: excess over the window oracle, trust by age, moving outage (E2), held sensor 0 curve, probes on the final representation, attention from the last token by age, mixed training, clean teacher, 48 epochs. |
+| E9 | R1, R2, H3 on real data | Beijing PM2.5 with imposed scatter and block masks on top of the natural gaps: gap by age bin, trust curve against the ridge reference, scatter vs mixed training, GRU and transformer. |
