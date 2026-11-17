@@ -109,10 +109,10 @@ details .tablewrap { margin-bottom: 10px; }
 
 <main>
 <header style="display:grid;gap:14px">
-  <p class="eyebrow">Project 04 · Step 1 and 1b · synthetic six-sensor data · dev data only</p>
+  <p class="eyebrow">Project 04 · Steps 1, 1b and 1c · synthetic six-sensor data · dev data only</p>
   <h1>Why long outages hurt the GRU forecaster</h1>
   <p class="lede">When readings are missing in long blocks, the GRU uses old filled values as if they were new. The information it needs is still in the input window. So most of the extra error is a failure of the model, not a loss of information.</p>
-  <nav class="toc"><a href="#problem">1. Problem</a><a href="#ideas">2. Four explanations</a><a href="#method">3. Experiments</a><a href="#results">4. Results</a><a href="#why">5. Why the GRU does not learn it</a><a href="#conclusion">6. Conclusion</a><a href="#next">7. Next steps</a><a href="#details">Per-seed tables</a></nav>
+  <nav class="toc"><a href="#problem">1. Problem</a><a href="#ideas">2. Four explanations</a><a href="#method">3. Experiments</a><a href="#results">4. Results</a><a href="#why">5. Why the GRU does not learn it</a><a href="#beyond">6. Transformer and real data</a><a href="#conclusion">7. Conclusion</a><a href="#next">8. Next steps</a><a href="#details">Per-seed tables</a></nav>
 </header>
 
 <div class="tiles">
@@ -261,11 +261,54 @@ details .tablewrap { margin-bottom: 10px; }
   </div>
 </section>
 
+<section id="beyond">
+  <h2>6. Beyond the GRU and the synthetic data</h2>
+  <p class="prose">Two questions remain. Is the failure a property of the recurrent memory? And does it appear on real data? We wrote six new tests and their pass marks before the runs (<code>research/HYPOTHESES.md</code>, Step 1c). The new models use PyTorch on CPU. The starter and the NumPy GRU are not changed.</p>
+  <div class="cards">
+    <div class="card"><span class="id">T1-T4 · synthetic data</span><h3>A small transformer</h3>
+      <p>A transformer reads every step of the window directly. It has no memory that settles. If the settling memory of H5 were the cause, a transformer would trust old values less. We also train the GRU again in PyTorch with Adam, to separate the optimizer from the architecture.</p>
+      <p class="test">T1: model failure is half or more of its gap. T2: trust at age 9+ stays 0.15 or more. T3: its representation holds "how old" (0.85 or more). T4: the Adam GRU behaves like the SGD GRU.</p></div>
+    <div class="card"><span class="id">R1-R2 · real data</span><h3>Beijing air quality</h3>
+      <p>PM2.5 at 6 Beijing stations, hourly, with real gaps. We add the scatter and block masks on top. Three target stations replace the three seeds. The real test period (the last 6 months) is never loaded.</p>
+      <p class="test">R1: windows where the target station is 3+ hours old carry half or more of the GRU gap. R2: the best linear trust falls with age, and the GRU trust does not.</p></div>
+  </div>
+  <p class="note">The transformer has 2 layers, 2 heads and width 16, with dropout. We picked it once from 8 sizes by dev scatter RMSE. It is still {{TF_RMSE_PCT}} worse than the GRU on dev scatter. On real data there is no true model, so there is no Kalman oracle. The reference is a ridge model with one weight on each station's last value per age bin. It is a learned model, not a lower bound.</p>
+
+  <div class="result">
+    <h3>T1, T2: the transformer fails the same way <span class="chip ok">Holds</span></h3>
+    <p class="prose">For the scatter-trained transformer, {{T1}} of the block gap is model failure (the NumPy GRU: {{GRU_SHARE}}). Its trust in a 9-step-old sensor-0 value is {{T2}}, against about 0.01 for the Kalman filter. T1 holds in {{T1_HITS}} of 3 seeds and T2 in {{T2_HITS}} of 3. The transformer trusts an old value like a fresh one, as the GRU does.</p>
+    {{SHARE_CHART}}
+    {{TF_TRUST_CHART}}
+    <p class="prose">The attention does not look for the last real reading. From the last step, the attention weight on any one step is {{ATT}}, close to 1/24 = 0.042. It does not change with age, and it is the same on the last real sensor-0 step and on the filled steps. A moving outage that ends 8 or 16 steps before the origin costs the transformer at most {{TF_FAR}} of the cost at the origin, so H2 also holds for it in the main.</p>
+  </div>
+
+  <div class="result">
+    <h3>T3: the transformer also drops "how old" <span class="chip no">Rejected</span></h3>
+    <p class="prose">We expected the transformer to keep the age and not use it. It does not keep it. Among old windows, a probe reads "3+ or 1-2 steps old" from its final representation with only {{T3}}, in {{T3_FAILS}} of 3 seeds below the pass mark of 0.85. The input window gives 0.99 to 1.00. When sensor 0 stops, the number of held steps can be read back with R² of {{TF_K_R2}} at most. So both architectures lose the age, but for the transformer it is not because of a settling memory. A model trained on mostly fresh windows has no reason to keep the age.</p>
+    {{TF_PROBE_CHART}}
+  </div>
+
+  <div class="result">
+    <h3>T4: Adam does not fix the GRU <span class="chip ok">Holds</span></h3>
+    <p class="prose">The PyTorch GRU with Adam trusts a 9-step-old value with {{T4}} (T4 holds in {{T4_HITS}} of 3 seeds). Its model-failure share is {{TGRU_SHARE}}. The optimizer is not the cause. Mixed training lowers the transformer's trust at age 9+ to {{TF_MIX9}}, a clean teacher gives {{TF_TEACH9}}, and 48 epochs give {{TF_E48_9}}, but the 48-epoch transformer overfits (see the E8 table).</p>
+  </div>
+
+  <div class="result">
+    <h3>R1, R2: the same trust error on real data, at a smaller cost <span class="chip ok">Holds</span></h3>
+    <p class="prose">The masks behave as on the synthetic data. The block mask makes the target station 3+ hours old at the origin in {{BJ_STALE_BLOCK}} of windows, the scatter mask in {{BJ_STALE_SCATTER}}. Each station has {{BJ_WINDOWS}} dev windows, and the old windows come from {{BJ_OUTAGES}} distinct outages. For the scatter-trained GRU, windows with a 3+ hour old value carry {{R1}} of the gap (R1 holds in {{R1_HITS}} of 3 stations).</p>
+    {{BJ_GAP_CHART}}
+    <p class="prose">The linear reference trusts the last value less as it gets older ({{R2_REF}}, age 0 → 9+). The GRU trusts it more ({{R2_GRU}}). This holds in 3 of 3 stations, and the transformer and mixed training do not change it. A moving outage that ends 8 or 16 hours before the origin costs at most {{BJ_FAR}} MSE.</p>
+    {{BJ_TRUST_CHART}}
+    <p class="prose">But the cost is small on this data. On old windows, the GRU error is only {{BJ_STALE_COST}} above the reference. PM2.5 changes slowly, and over 6 hours most of the error is noise that no model can predict. Here the transformer is {{BJ_TF}} better than the GRU on dev scatter. So the wrong trust curve is general, but it matters most when the signal moves fast compared with the outage length.</p>
+  </div>
+</section>
+
 <section id="conclusion">
-  <h2>6. Conclusion</h2>
+  <h2>7. Conclusion</h2>
   <div class="claim">
     <p><strong>Mechanism: stale-fill trust.</strong> Forward fill makes an outage look like a normal, constant reading. The GRU uses this filled value with the same weight as a fresh value. The best forecast gives it less weight as it gets older.</p>
     <p>Scatter training almost never shows values older than 2 steps, so the GRU never needed this rule. The age information is in the input, but this small GRU does not turn it into a discount at this training budget. Block training at the same budget does not change that.</p>
+    <p><strong>How general (Step 1c).</strong> A small transformer fails the same way: {{T1}} of its gap is model failure, and it trusts a 9-step-old value with {{T2}}. Its attention is close to uniform and does not look for the last real reading. It also does not keep "how old". On real Beijing PM2.5 data, the GRU trust curve rises with age while the best linear curve falls, in 3 of 3 stations, but the cost there is small ({{BJ_STALE_COST}} on old windows). The cause is the training signal plus forward fill, not only the recurrent memory.</p>
     <p><strong>Why (Step 1b).</strong> The GRU memory settles within a few steps when an input stops changing. It keeps "this value is old" but forgets "how old". No readout can recover the discount from it. A clean target does not teach it either. With more old windows, the GRU only lowers one fixed weight for all ages. A discount that depends on age needs a multiplication of value and age, and this GRU learns that very slowly.</p>
   </div>
   <div class="tablewrap"><table class="wtable">
@@ -276,6 +319,10 @@ details .tablewrap { margin-bottom: 10px; }
     <tr><td>H4</td><td>No help from other sensors</td><td><span class="chip ok">Holds, wider</span></td><td>Outages on the 5 other sensors cost the GRU {{OTHERS_GRU}} MSE and the Kalman filter {{OTHERS_KF}}.</td></tr>
     <tr><td>H5</td><td>The memory forgets how old a value is</td><td><span class="chip mid">Partly right</span></td><td>"Old or not" is in the memory ({{PR_MX}}), "how old" mostly is not ({{PW}} against {{PW_IN}} from the input). Largest Jacobian eigenvalue {{RADIUS}}. A new readout removes at most {{REMOVED_MAX}} of the extra error.</td></tr>
     <tr><td>H6</td><td>Targets too noisy to learn from</td><td><span class="chip no">Rejected</span></td><td>A clean teacher keeps {{T0_RATIO}} of the extra error. Trust at age 9+ stays {{T0_SENS9}} (3 of 3 seeds).</td></tr>
+    <tr><td>T1, T2</td><td>A transformer fails the same way</td><td><span class="chip ok">Holds</span></td><td>Model-failure share {{T1}}. Trust at age 9+ {{T2}} ({{T2_HITS}} of 3 seeds at 0.15 or more).</td></tr>
+    <tr><td>T3</td><td>The transformer keeps "how old" but does not use it</td><td><span class="chip no">Rejected</span></td><td>"How old" probe {{T3}}, input 0.99 to 1.00. Attention per step {{ATT}}, close to uniform.</td></tr>
+    <tr><td>T4</td><td>Adam does not fix the GRU</td><td><span class="chip ok">Holds</span></td><td>PyTorch GRU trust at age 9+ {{T4}}.</td></tr>
+    <tr><td>R1, R2</td><td>Real data: same trust error</td><td><span class="chip ok">Holds, small cost</span></td><td>Old windows carry {{R1}} of the GRU gap. Reference trust falls with age, GRU trust rises (3 of 3 stations). GRU error on old windows {{BJ_STALE_COST}} above the reference.</td></tr>
   </table></div>
   <h3>Limits</h3>
   <ul class="prose">
@@ -284,11 +331,12 @@ details .tablewrap { margin-bottom: 10px; }
     <li>Three data seeds. The old-value results rest on about 21 to 23 outages per seed.</li>
     <li>The Kalman filter knows the true model. It shows that the information is in the window. It does not show that a learned model can reach its error.</li>
     <li>The probes are simple (linear and nearest neighbour). A more complex probe could find more age information in the memory. The "how old" probe was added after the first run.</li>
+      <li>The real data is one city and one pollutant. On real data there is no oracle, and the ridge reference is not a lower bound. The transformer is small and was sized once on dev scatter.</li>
   </ul>
 </section>
 
 <section id="next">
-  <h2>7. Next steps</h2>
+  <h2>8. Next steps</h2>
   <ol class="steps">
     <li><b>Step 2: prove the mechanism directly</b>
       <span>Keep the age of the old value the same and change only the value. Replace it with the Kalman estimate. If the extra GRU error goes away, stale-fill trust is confirmed. If it stays, the memory of the GRU is the problem.</span></li>
@@ -360,6 +408,18 @@ details .tablewrap { margin-bottom: 10px; }
       {{E7_ROWS}}
     </table></div>
     <p class="note">Extra error = GRU MSE minus Kalman (24 steps) MSE on the same dev block windows. Range over 5 starts in small text. All arms use mixed-mask train windows and 12 epochs unless marked.</p></details>
+  <details><summary>E8: transformer and PyTorch GRU on the synthetic data</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Seed</th><th>Model, training</th><th>Scatter RMSE</th><th>Block RMSE</th><th>Gap (MSE)</th><th>Model-failure share</th><th>Extra error, age 3+</th><th>Trust at age 0 / 9+</th><th>"How old" probe</th><th>Moving outage on sensor 0, offset 0 / 8 / 16</th></tr>
+      {{E8_ROWS}}
+    </table></div>
+    <p class="note">Mean of 5 starts per seed. Model-failure share = (model gap minus Kalman gap) / model gap, on all dev windows. A negative share means the model gap is smaller than the Kalman gap.</p></details>
+  <details><summary>E9: Beijing PM2.5, three target stations</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Station</th><th>Model, training</th><th>Scatter RMSE</th><th>Block RMSE</th><th>Gap (MSE)</th><th>Gap share, age 3+</th><th>Block MSE, age 3+</th><th>Trust at age 0 / 9+</th><th>Moving outage, offset 0 / 8 / 16</th></tr>
+      {{E9_ROWS}}
+    </table></div>
+    <p class="note">Values are log(1 + PM2.5). Dev period 2015-09 to 2016-08. The ridge trust is its weight on the target station's last value in that age bin.</p></details>
   <details><summary>Reproduce</summary>
   <pre>P=miniconda3/envs/proteinttt/bin/python   # base env numpy is broken
 export OMP_NUM_THREADS=1                   # without it, each run is about 20x slower
@@ -368,7 +428,8 @@ $P research/e0_baseline_exposure.py && $P research/e1_age_stratified.py
 $P research/e2_block_position.py && $P research/e3_window_oracle.py
 $P research/e4_training_masks.py && $P research/e4b_budget_capacity.py
 $P research/e5_cross_sensor.py && $P research/e6_representation.py
-$P research/e7_distillation.py && $P report/build_report.py</pre>
+$P research/e7_distillation.py && $P research/e8_transformer.py
+$P research/e9_beijing.py && $P report/build_report.py   # e9 downloads the UCI data once</pre>
   <p class="note">CPU only. The full set takes about 1 minute on 64 cores.</p></details>
 </section>
 </main>

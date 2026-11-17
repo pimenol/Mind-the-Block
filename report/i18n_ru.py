@@ -100,6 +100,32 @@ TR = {
     'true signal': 'истинный сигнал', 'reading the model sees': 'показание, которое видит модель',
     'filled value the model sees': 'заполненное значение, которое видит модель',
     '>sensor 0<': '>сенсор 0<',
+    # Step 1c (E8, E9)
+    'T1: share of the block-mask gap that is model failure (excess over the Kalman filter)':
+        'T1: доля разрыва на маске block, которая является сбоем модели (сверх фильтра Калмана)',
+    'model-failure share of the gap (0.5 = half)': 'доля сбоя модели в разрыве (0.5 = половина)',
+    'T2: trust in the last sensor-0 value by its age, three models (mean of 3 seeds)':
+        'T2: доверие к последнему значению сенсора 0 по его возрасту, три модели (среднее по 3 сидам)',
+    'T3: what a probe reads about the sensor-0 age from the final representation (balanced accuracy, mean of 3 seeds)':
+        'T3: что проба читает о возрасте сенсора 0 из итогового представления (balanced accuracy, среднее по 3 сидам)',
+    'R2, real data: trust in the last value of the target station by its age (mean of 3 stations)':
+        'R2, реальные данные: доверие к последнему значению целевой станции по его возрасту (среднее по 3 станциям)',
+    'R1, real data: block-minus-scatter MSE gap by the age of the target station at the origin (GRU, scatter-trained)':
+        'R1, реальные данные: разрыв MSE block минус scatter по возрасту целевой станции в точке прогноза (GRU, обучена на scatter)',
+    'age of the target-station value at the forecast origin (hours)': 'возраст значения целевой станции в точке прогноза (часы)',
+    'mean extra MSE per window in this age bin': 'средняя лишняя MSE на окно в этом интервале возраста',
+    'GRU in PyTorch, Adam': 'GRU в PyTorch, Adam', 'GRU, NumPy, SGD': 'GRU, NumPy, SGD',
+    'Transformer, scatter-trained': 'Трансформер, обучен на scatter', 'Transformer, mixed-trained': 'Трансформер, обучен на смеси',
+    'Age-aware linear reference (ridge)': 'Линейный ориентир с учётом возраста (ridge)',
+    'GRU (NumPy, SGD), scatter': 'GRU (NumPy, SGD), scatter', 'GRU (PyTorch, Adam), scatter': 'GRU (PyTorch, Adam), scatter',
+    'GRU (PyTorch, Adam), mixed': 'GRU (PyTorch, Adam), смесь',
+    'Transformer, scatter, age input': 'Трансформер, scatter, вход с возрастом',
+    'Transformer, mixed, clean teacher': 'Трансформер, смесь, чистый учитель',
+    'Transformer, scatter, 48 epochs': 'Трансформер, scatter, 48 эпох',
+    'Transformer, scatter': 'Трансформер, scatter', 'Transformer, mixed': 'Трансформер, смесь',
+    '<td>GRU, scatter</td>': '<td>GRU, scatter</td>', '<td>GRU, mixed</td>': '<td>GRU, смесь</td>',
+    'Ridge reference': 'Ridge-ориентир',
+    'age 0': 'возраст 0', 'age 1': 'возраст 1', 'age 2': 'возраст 2', 'age 3-4': 'возраст 3-4', 'age 5-8': 'возраст 5-8', 'age 9+': 'возраст 9+',
     # table row labels
     'GRU, ages zeroed': 'GRU, возраст обнулён', 'GRU, age input': 'GRU, вход с возрастом',
     'GRU, fills only': 'GRU, только заполнения', 'Kalman oracle': 'Оракул Калмана',

@@ -572,6 +572,140 @@ subs = {
     'KF_SENS_0': f(kf_sens[0], 2), 'KF_SENS_9': f(kf_sens[-1], 2), 'GRU_SENS_0': f(gru_sens[0], 2), 'GRU_SENS_9': f(gru_sens[-1], 2),
 }
 
+# ---------------------------------------------------------------- Step 1c: E8 transformer, E9 Beijing
+E8 = by_seed('e8_transformer')
+E9 = {r['target']: r for r in R['e9_beijing']}
+STATIONS = list(E9)
+COL.update({'tgru': 'var(--s3)', 'tf': 'var(--s5)', 'tf_mixed': 'var(--s4)', 'ref': 'var(--s2)'})
+NAME.update({'tgru': 'GRU in PyTorch, Adam', 'tf': 'Transformer, scatter-trained', 'tf_mixed': 'Transformer, mixed-trained',
+             'ref': 'Age-aware linear reference (ridge)'})
+
+
+def e8v(arm, key):
+  return [E8[s]['arms'][arm][key]['mean'] for s in SEEDS]
+
+
+def e8trust(s, arm, i=-1):
+  return E8[s]['arms'][arm]['trust'][i]['value']
+
+
+def e8probe(s, arm, part='probe_within_stale'):
+  return m_([p['linear'] for p in E8[s]['arms'][arm][part]])
+
+
+share_chart = hbar_groups('share', 'T1: share of the block-mask gap that is model failure (excess over the Kalman filter)',
+    [(f'seed {s}', {'gru': E8[s]['arms']['gru_scatter']['excess_share']['mean'], 'tgru': E8[s]['arms']['tgru_scatter']['excess_share']['mean'],
+                    'tf': E8[s]['arms']['tf_scatter']['excess_share']['mean']}) for s in SEEDS],
+    ['gru', 'tgru', 'tf'], 'model-failure share of the gap (0.5 = half)', w=640, row=22)
+tf_trust_chart = line_chart('tftrust', 'T2: trust in the last sensor-0 value by its age, three models (mean of 3 seeds)', bins, bins, [
+    ('kalman', NAME['kalman'], list(np.mean([[x['value'] for x in E4[s]['kalman_sensitivity']] for s in SEEDS], 0))),
+    ('gru', 'GRU, NumPy, SGD', list(np.mean([[x['value'] for x in E8[s]['arms']['gru_scatter']['trust']] for s in SEEDS], 0))),
+    ('tgru', NAME['tgru'], list(np.mean([[x['value'] for x in E8[s]['arms']['tgru_scatter']['trust']] for s in SEEDS], 0))),
+    ('tf', NAME['tf'], list(np.mean([[x['value'] for x in E8[s]['arms']['tf_scatter']['trust']] for s in SEEDS], 0)))],
+    ('age of the sensor-0 value at the forecast origin (steps)', 'trust (forecast change per unit)'), ymin=0, w=640, h=320)
+tf_probe_chart = hbar_groups('tfprobe', 'T3: what a probe reads about the sensor-0 age from the final representation (balanced accuracy, mean of 3 seeds)',
+    [('Old or not?', {'probe_sc': m_([probe(s, 'scatter/zero', 'linear') for s in SEEDS]),
+                      'tgru': m_([e8probe(s, 'tgru_scatter', 'probe') for s in SEEDS]),
+                      'tf': m_([e8probe(s, 'tf_scatter', 'probe') for s in SEEDS]),
+                      'probe_in': m_([E6[s]['input_ceiling']['linear'] for s in SEEDS])}),
+     ('How old?', {'probe_sc': m_([probe(s, 'scatter/zero', 'linear', 'probe_within_stale') for s in SEEDS]),
+                   'tgru': m_([e8probe(s, 'tgru_scatter') for s in SEEDS]),
+                   'tf': m_([e8probe(s, 'tf_scatter') for s in SEEDS]),
+                   'probe_in': m_([E6[s]['input_ceiling_within_stale']['linear'] for s in SEEDS])})],
+    ['probe_sc', 'tgru', 'tf', 'probe_in'], 'balanced accuracy', w=640, row=22)
+bj_trust_chart = line_chart('bjtrust', 'R2, real data: trust in the last value of the target station by its age (mean of 3 stations)', bins, bins, [
+    ('ref', NAME['ref'], list(np.mean([[x['value'] for x in E9[t]['reference']['trust']] for t in STATIONS], 0))),
+    ('gru', 'GRU, scatter-trained', list(np.mean([[x['value'] for x in E9[t]['arms']['gru_scatter']['trust']] for t in STATIONS], 0))),
+    ('gru_mixed', 'GRU, mixed-trained', list(np.mean([[x['value'] for x in E9[t]['arms']['gru_mixed']['trust']] for t in STATIONS], 0))),
+    ('tf', NAME['tf'], list(np.mean([[x['value'] for x in E9[t]['arms']['tf_scatter']['trust']] for t in STATIONS], 0)))],
+    ('age of the target-station value at the forecast origin (hours)', 'trust (forecast change per unit)'), ymin=0, w=640, h=320)
+COL.update({f'bin{k}': c for k, c in enumerate(['var(--muted)', 'var(--s1)', 'var(--s3)', 'var(--s4)', 'var(--s2)', 'var(--s5)'])})
+NAME.update({f'bin{k}': f'age {lab}' for k, lab in enumerate(bins)})
+bj_gap_chart = hbar_groups('bjgap', 'R1, real data: block-minus-scatter MSE gap by the age of the target station at the origin (GRU, scatter-trained)',
+    [(t, {f'bin{k}': E9[t]['arms']['gru_scatter']['gap_by_bin'][k]['value'] for k in range(6)}) for t in STATIONS],
+    [f'bin{k}' for k in range(6)], 'mean extra MSE per window in this age bin', w=640, row=16, signed=True)
+
+
+def e8_table():
+  rows = []
+  labels = {'gru_scatter': 'GRU (NumPy, SGD), scatter', 'tgru_scatter': 'GRU (PyTorch, Adam), scatter', 'tgru_mixed': 'GRU (PyTorch, Adam), mixed',
+            'tf_scatter': 'Transformer, scatter', 'tf_mixed': 'Transformer, mixed', 'tf_scatter_age': 'Transformer, scatter, age input',
+            'tf_mixed_teach': 'Transformer, mixed, clean teacher', 'tf_scatter_e48': 'Transformer, scatter, 48 epochs'}
+  for s in SEEDS:
+    for arm, lab in labels.items():
+      a = E8[s]['arms'][arm]
+      pw = f(e8probe(s, arm), 2) if 'probe' in a else '-'
+      rows.append(f"<tr><td>{s}</td><td>{lab}</td><td>{f(a['rmse_scatter']['mean'], 4)}</td><td>{f(a['rmse_block']['mean'], 4)}</td>"
+                  f"<td>{f(a['gap']['mean'], 4)}</td><td>{f(a['excess_share']['mean'], 2)}</td><td>{f(a['excess_stale']['mean'], 4)}</td>"
+                  f"<td>{f(a['trust'][0]['value'], 2)} / {f(a['trust'][-1]['value'], 2)}</td><td>{pw}</td>"
+                  f"<td>{fs(a['moving']['s0']['0'], 4)} / {fs(a['moving']['s0']['8'], 4)} / {fs(a['moving']['s0']['16'], 4)}</td></tr>")
+  return '\n'.join(rows)
+
+
+def e9_table():
+  rows = []
+  labels = {'gru_scatter': 'GRU, scatter', 'gru_mixed': 'GRU, mixed', 'tf_scatter': 'Transformer, scatter', 'tf_mixed': 'Transformer, mixed'}
+  for t in STATIONS:
+    r = E9[t]
+    ref = r['reference']
+    rows.append(f"<tr><td>{t}</td><td>Ridge reference</td><td>{f(ref['rmse_scatter'], 4)}</td><td>{f(ref['rmse_block'], 4)}</td>"
+                f"<td>{f(ref['gap'], 4)}</td><td>-</td><td>{f(ref['mse_stale_block'], 4)}</td>"
+                f"<td>{f(ref['trust'][0]['value'], 2)} / {f(ref['trust'][-1]['value'], 2)}</td><td>-</td></tr>")
+    for arm, lab in labels.items():
+      a = r['arms'][arm]
+      rows.append(f"<tr><td>{t}</td><td>{lab}</td><td>{f(a['rmse_scatter']['mean'], 4)}</td><td>{f(a['rmse_block']['mean'], 4)}</td>"
+                  f"<td>{f(a['gap']['mean'], 4)}</td><td>{f(a['stale_gap_share'], 2)}</td><td>{f(a['mse_stale_block'], 4)}</td>"
+                  f"<td>{f(a['trust'][0]['value'], 2)} / {f(a['trust'][-1]['value'], 2)}</td>"
+                  f"<td>{fs(a['moving_s0']['0'], 4)} / {fs(a['moving_s0']['8'], 4)} / {fs(a['moving_s0']['16'], 4)}</td></tr>")
+  return '\n'.join(rows)
+
+
+t1 = e8v('tf_scatter', 'excess_share')
+t2 = [e8trust(s, 'tf_scatter') for s in SEEDS]
+t3 = [e8probe(s, 'tf_scatter') for s in SEEDS]
+t4 = [e8trust(s, 'tgru_scatter') for s in SEEDS]
+t1_hits, t2_hits = sum(v >= .5 for v in t1), sum(v >= .15 for v in t2)
+t3_hits, t4_hits = sum(v >= .85 for v in t3), sum(v >= .15 for v in t4)
+# Verdict guards: the template states these verdicts in words.
+assert t1_hits >= 2 and t2_hits >= 2 and t3_hits <= 1 and t4_hits >= 2, (t1_hits, t2_hits, t3_hits, t4_hits)
+att = [b['value'] for s in SEEDS for arm in ['tf_scatter', 'tf_mixed'] for L in ['layer0', 'layer1']
+       for part in ['on_last_step', 'on_last_real_s0'] for b in E8[s]['arms'][arm]['attention'][L][part]]
+tf_rmse_pct = [100 * (E8[s]['arms']['tf_scatter']['rmse_scatter']['mean'] / E8[s]['arms']['gru_scatter']['rmse_scatter']['mean'] - 1) for s in SEEDS]
+tf_far = [max(abs(E8[s]['arms']['tf_scatter']['moving']['s0'][o]) for o in ['8', '16']) / E8[s]['arms']['tf_scatter']['moving']['s0']['0'] for s in SEEDS]
+r1 = [E9[t]['arms']['gru_scatter']['stale_gap_share'] for t in STATIONS]
+r1_hits = sum(v >= .5 for v in r1)
+ref0, ref9 = [E9[t]['reference']['trust'][0]['value'] for t in STATIONS], [E9[t]['reference']['trust'][-1]['value'] for t in STATIONS]
+g0, g9 = [E9[t]['arms']['gru_scatter']['trust'][0]['value'] for t in STATIONS], [E9[t]['arms']['gru_scatter']['trust'][-1]['value'] for t in STATIONS]
+r2_hits = sum(a > b for a, b in zip(ref0, ref9))
+assert r1_hits >= 2 and r2_hits == 3 and all(b > a for a, b in zip(g0, g9)), (r1_hits, r2_hits)
+bj_stale_cost = [100 * (E9[t]['arms']['gru_scatter']['mse_stale_block'] / E9[t]['reference']['mse_stale_block'] - 1) for t in STATIONS]
+bj_far = [max(abs(E9[t]['arms'][a]['moving_s0'][o]) for a in E9[t]['arms'] for o in ['8', '16']) for t in STATIONS]
+bj_tf = [100 * (E9[t]['arms']['tf_scatter']['rmse_scatter']['mean'] / E9[t]['arms']['gru_scatter']['rmse_scatter']['mean'] - 1) for t in STATIONS]
+assert all(v < 0 for v in bj_tf)  # the text says the transformer is better on real data
+
+
+def arrows(keys, a_vals, b_vals, d=2):
+  return ', '.join(f'{k}: {a:.{d}f} → {b:.{d}f}' for k, a, b in zip(keys, a_vals, b_vals))
+
+
+subs.update({
+    'SHARE_CHART': share_chart, 'TF_TRUST_CHART': tf_trust_chart, 'TF_PROBE_CHART': tf_probe_chart,
+    'BJ_TRUST_CHART': bj_trust_chart, 'BJ_GAP_CHART': bj_gap_chart, 'E8_ROWS': e8_table(), 'E9_ROWS': e9_table(),
+    'T1': rng(t1, 2), 'T2': rng(t2, 2), 'T3': rng(t3, 2), 'T4': rng(t4, 2),
+    'T1_HITS': str(t1_hits), 'T2_HITS': str(t2_hits), 'T3_FAILS': str(3 - t3_hits), 'T4_HITS': str(t4_hits),
+    'GRU_SHARE': rng(e8v('gru_scatter', 'excess_share'), 2), 'TGRU_SHARE': rng(e8v('tgru_scatter', 'excess_share'), 2),
+    'ATT': rng(att, 3), 'TF_RMSE_PCT': f'{min(tf_rmse_pct):.0f}% to {max(tf_rmse_pct):.0f}%',
+    'TF_FAR': f'{100 * max(tf_far):.0f}%', 'TF_MIX9': rng([e8trust(s, 'tf_mixed') for s in SEEDS], 2),
+    'TF_TEACH9': rng([e8trust(s, 'tf_mixed_teach') for s in SEEDS], 2), 'TF_E48_9': rng([e8trust(s, 'tf_scatter_e48') for s in SEEDS], 2),
+    'TF_K_R2': f(max(E8[s]['arms'][a]['held_sensor0']['k_decode_r2'] for s in SEEDS for a in ['tf_scatter', 'tf_mixed']), 2),
+    'R1': rng(r1, 2), 'R1_HITS': str(r1_hits), 'R2_REF': arrows(STATIONS, ref0, ref9), 'R2_GRU': arrows(STATIONS, g0, g9),
+    'BJ_STALE_COST': f'{min(bj_stale_cost):.0f}% to {max(bj_stale_cost):.0f}%', 'BJ_FAR': f(max(bj_far), 4),
+    'BJ_TF': f'{min(-v for v in bj_tf):.0f}% to {max(-v for v in bj_tf):.0f}%',
+    'BJ_OUTAGES': f"{min(E9[t]['distinct_outages_stale'] for t in STATIONS)} to {max(E9[t]['distinct_outages_stale'] for t in STATIONS)}",
+    'BJ_WINDOWS': f"{min(E9[t]['n_windows'] for t in STATIONS)} to {max(E9[t]['n_windows'] for t in STATIONS)}",
+    'BJ_STALE_BLOCK': rng([E9[t]['stale_share']['block'] for t in STATIONS], 3), 'BJ_STALE_SCATTER': rng([E9[t]['stale_share']['scatter'] for t in STATIONS], 3),
+})
+
 
 def render(template, values, out):
   html = (ROOT / 'report' / template).read_text()
