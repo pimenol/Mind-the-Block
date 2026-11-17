@@ -112,6 +112,29 @@ def test_window_kf_split_default_and_block_default():
   assert all(np.array_equal(u, v) for u, v in zip(a, b))
 
 
+def test_torch_models_shape_and_determinism():
+  import torch_models as tm
+  d = load(940)
+  s = make_split(d, 'train', 'scatter', 950, 'zero')
+  x, y = s['x'][:256], s['y'][:256]
+  for arch in tm.ARCH:
+    a = tm.train(arch, x, y, 940, 0, epochs=1, per_epoch=64)
+    b = tm.train(arch, x, y, 940, 0, epochs=1, per_epoch=64)
+    pa = a.predict(x[:50])
+    assert pa.shape == (50,) and np.array_equal(pa, b.predict(x[:50]))
+    assert a.hidden(x[:5]).ndim == 2
+  t = tm.train('tf', x, y, 940, 0, epochs=1, per_epoch=64)
+  assert np.allclose(t.attention(x[:5]).sum(1), 1, atol=1e-5)
+
+
+def test_real_data_no_test_period():
+  import real_data as rd
+  d = rd.load_real(rd.TARGETS[0])
+  assert not [k for k in d if k.startswith('test')]
+  assert d['dates']['train'][1] < d['dates']['dev'][0] and d['dates']['dev'][1] < rd.DEV_END
+  assert d['train_observed'].shape[1] == 6 and d['dev_target'].ndim == 1
+
+
 if __name__ == '__main__':
   for name, fn in list(globals().items()):
     if name.startswith('test_'):

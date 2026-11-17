@@ -1,1 +1,2 @@
 numpy>=1.24,<3
+torch>=1.13  # optional: only research/torch_models.py, e8, e9 (Step 1c)
