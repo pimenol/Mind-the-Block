@@ -25,3 +25,19 @@ If the same 25% of readings per sensor is removed in 8-step blocks, a GRU traine
 | E3 | H3, H4 | Kalman filter on the recovered true model: Bayes-optimal error under each mask, with all sensors and with sensor 0 only. |
 | E4 | H3 | GRU trained on scatter, block, or mixed masks at the same budget. Sensitivity of the forecast to the stale fill, by age. |
 | E5 | H4 | 2x2 factorial mask (sensor 0 pattern x other sensors pattern) and a ridge model on last-step features. |
+
+## Step 1b (2026-11-17): why the GRU does not learn age discounting
+
+Written before running E6 and E7. The falsifiers are fixed here. Step 1 showed that the GRU does not discount a held sensor-0 value by its age, and that more epochs, more units, and block or mixed training do not fix it. Step 1b asks why. H5 asks if the information is in the hidden state. H6 asks if the network can learn the right function when the target has no noise.
+
+| ID | Explanation | Prediction | Falsified if |
+|---|---|---|---|
+| H5 (representation, not readout) | The hidden state h at the origin does not encode how stale sensor 0 is. Under a held input, the state relaxes to an input-driven fixed point in a few steps, so the time since the last reading is erased. The readout cannot discount what h does not hold. | (a) A binary probe for staleness (age0 >= 3 vs < 3) on h has balanced accuracy near a shuffled-label control, for a linear probe and a kNN probe. (b) With all inputs held, h converges in about 3 steps, and the spectral radius of the Jacobian dh_t/dh_(t-1) at the fixed point is well below 1. (c) A linear readout refit on frozen h removes less than 50% of the stale-origin excess over the window oracle. | Probe balanced accuracy >= 0.75 with selectivity >= 0.15 over the control, or the mixed-trained GRU with a mixed-window readout refit removes >= 50% of the excess. Then the information is in h and the readout is the bottleneck. |
+| H6 (learnability, not expressivity) | The 8-unit GRU can represent age discounting, but noisy targets give too weak a gradient for it. Sub-question: target noise or too few stale windows. | The same GRU (same budget, init, minibatch order, mixed-mask train windows), trained on the noise-free 24-step window-oracle forecast, cuts the stale-origin excess (age0 >= 3) on dev block by >= 50%, and its sensitivity to the held value falls with age. Fixed Gaussian noise added to the teacher, with scale a x the oracle standard deviation, a in {0, .25, .5, 1}, raises the excess monotonically. a = 1 matches the real-target arm. Oversampling stale-origin windows 5x with real targets separates noise from sample count. | The distilled GRU keeps >= 50% of the excess, or its sensitivity at age 9+ stays >= 0.15. Then the limit is the architecture or its inductive bias, not the training signal. |
+
+The window oracle is a teacher for a diagnostic only. It uses the true generator parameters and only the readings inside the window, so no future value enters an input. It is not a method.
+
+| ID | Tests | Design |
+|---|---|---|
+| E6 | H5 | Staleness probes on h (linear, kNN, shuffled control, age-input GRU as positive control). Readout refit on frozen h in three cells. Fixed-point relaxation with all inputs held, Jacobian spectral radius, and the forecast under a held sensor 0. |
+| E7 | H6 | Distillation from the window oracle with a noise dose-response, a stale-oversampling arm with real targets, and 48-epoch controls. |
