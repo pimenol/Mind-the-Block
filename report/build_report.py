@@ -505,7 +505,8 @@ def e7_table():
 pr_sc = [probe(s, 'scatter/zero', 'linear') for s in SEEDS]
 pr_mx = [probe(s, 'mixed/zero', 'linear') for s in SEEDS]
 pr_sel = [probe(s, a, 'linear') - probe(s, a, 'linear_control') for s in SEEDS for a in ['scatter/zero', 'mixed/zero']]
-h5a_hits = sum(probe(s, 'mixed/zero', 'linear') >= .75 for s in SEEDS)
+h5a_hits = sum(probe(s, 'mixed/zero', 'linear') >= .75 and
+               probe(s, 'mixed/zero', 'linear') - probe(s, 'mixed/zero', 'linear_control') >= .15 for s in SEEDS)
 pw = [probe(s, a, 'linear', 'probe_within_stale') for s in SEEDS for a in ['scatter/zero', 'mixed/zero']]
 pw_in = [E6[s]['input_ceiling_within_stale']['linear'] for s in SEEDS]
 radius = [m_([x['radius_median'] for x in E6[s]['arms'][a]['fixed_point']]) for s in SEEDS for a in E6[940]['arms']]
@@ -531,6 +532,7 @@ assert all(a > b for a, b in zip(o5_fresh, real_fresh)) and all(a < b for a, b i
 e48_ratio = [E7[s]['arms'][a]['excess_vs_real'] for s in SEEDS for a in ['real_e48', 'teach0.0_e48']]
 e48_sens9 = [E7[s]['arms'][a]['sensitivity_s0'][-1]['value'] for s in SEEDS for a in ['real_e48', 'teach0.0_e48']]
 kf9 = [E4[s]['kalman_sensitivity'][-1]['value'] for s in SEEDS]
+# Guard: the H6 chip in the template says Rejected. If E7 changes, update the chip, then this line.
 assert all(r > .5 for r in t0_ratio) and all(v >= .15 for v in t0_sens9)  # H6 falsifier, as registered
 
 def per_seed_arrow(a_vals, b_vals, d=3):
