@@ -121,7 +121,7 @@ python research/e4b_budget_capacity.py     # E4b: epochs x hidden units (12, 48)
 python research/e5_cross_sensor.py         # E5: 2x2 sensor factorial mask and ridge reference
 python research/e6_representation.py      # E6: probes on h, readout refit, fixed-point dynamics
 python research/e7_distillation.py         # E7: window-oracle teacher, noise doses, stale oversampling, 48 epochs
-python report/build_report.py              # results/*.json + report/template.html -> report/report.html
+python report/build_report.py              # results/*.json + report/template{,_ru}.html -> report/report{,_ru}.html
 ```
 
 The scripts use `multiprocessing` (up to 32 processes, 48 for E4b) and set the

@@ -5,6 +5,8 @@ from pathlib import Path
 
 import numpy as np
 
+from i18n_ru import tr
+
 ROOT = Path(__file__).resolve().parent.parent
 R = {p.stem: json.loads(p.read_text()) for p in (ROOT / 'results').glob('*.json')}
 SEEDS = [940, 941, 942]
@@ -547,7 +549,6 @@ def pct(vals):
   return f'{100 * min(vals):.0f}% to {100 * max(vals):.0f}%'
 
 
-html = (ROOT / 'report' / 'template.html').read_text()
 subs = {
     'EXPOSURE_ROWS': exposure_table(), 'BASELINE_ROWS': baseline_table(), 'FRESH_STALE_ROWS': fresh_stale_table(),
     'E2_ROWS': e2_table(), 'TRAIN_ROWS': training_table(), 'E4B_ROWS': e4b_table(), 'FACTORIAL_ROWS': factorial_table(),
@@ -570,11 +571,19 @@ subs = {
     'KF9': rng(kf9, 2), 'DOSE': dose, 'FRESH_SHIFT': fresh_shift, 'N_WORSE': str(n_worse), 'N_REFIT': str(len(removed)),
     'KF_SENS_0': f(kf_sens[0], 2), 'KF_SENS_9': f(kf_sens[-1], 2), 'GRU_SENS_0': f(gru_sens[0], 2), 'GRU_SENS_9': f(gru_sens[-1], 2),
 }
-for k, v in subs.items():
-  html = html.replace('{{' + k + '}}', v)
-assert '{{' not in html, html[html.index('{{'):html.index('{{') + 40]
-(ROOT / 'report' / 'report.html').write_text(html)
-print('wrote report/report.html', len(html), 'bytes')
+
+
+def render(template, values, out):
+  html = (ROOT / 'report' / template).read_text()
+  for k, v in values.items():
+    html = html.replace('{{' + k + '}}', v)
+  assert '{{' not in html, html[html.index('{{'):html.index('{{') + 40]
+  (ROOT / 'report' / out).write_text(html)
+  print('wrote report/' + out, len(html), 'bytes')
+
+
+render('template.html', subs, 'report.html')
+render('template_ru.html', {k: tr(v) for k, v in subs.items()}, 'report_ru.html')
 for k in ['EXCESS_RANGE', 'ORACLE_RANGE', 'OTHERS_GRU', 'OTHERS_KF', 'S0_GRU', 'S0_KF', 'AGE_VS_ZERO']:
   print(k, subs[k])
 print('sens kf', [round(x, 2) for x in kf_sens], 'gru', [round(x, 2) for x in gru_sens])

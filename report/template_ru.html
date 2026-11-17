@@ -1,0 +1,389 @@
+<title>Доверие к старым значениям</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,650&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column (about 70ch) with wide figures and tables that scroll inside their own box. */
+:root {
+  --bg: #f7f8fa; --panel: #ffffff; --fg: #15181d; --fg2: #4a5160; --muted: #6b7280; --rule: #dde1e8; --grid: #e7eaf0;
+  --accent: #1f5fae; --chip-ok: #e3f1e6; --chip-ok-fg: #1d5b2b; --chip-no: #f8e4e2; --chip-no-fg: #8a2620;
+  --chip-mid: #fbf0d9; --chip-mid-fg: #7a5200;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4;
+  --display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121418; --panel: #1a1d22; --fg: #eceef2; --fg2: #b9bfcb; --muted: #8e95a3; --rule: #2c313a; --grid: #262a32;
+  --accent: #6aa5ee; --chip-ok: #1b3322; --chip-ok-fg: #9fd8ad; --chip-no: #3a1f1d; --chip-no-fg: #f0a59e;
+  --chip-mid: #352a12; --chip-mid-fg: #f0c97a;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121418; --panel: #1a1d22; --fg: #eceef2; --fg2: #b9bfcb; --muted: #8e95a3; --rule: #2c313a; --grid: #262a32;
+  --accent: #6aa5ee; --chip-ok: #1b3322; --chip-ok-fg: #9fd8ad; --chip-no: #3a1f1d; --chip-no-fg: #f0a59e;
+  --chip-mid: #352a12; --chip-mid-fg: #f0c97a;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; color-scheme: dark }
+body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body); }
+main { max-width: 980px; margin: 0 auto; padding-block: 40px 80px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+main > * { min-width: 0; }
+.prose { max-width: 70ch; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; line-height: 1.2; margin: 0; }
+h1 { font-size: clamp(2rem, 5vw, 2.9rem); font-weight: 650; }
+h2 { font-size: 1.6rem; font-weight: 650; padding-top: 18px; border-top: 1px solid var(--rule); }
+h3 { font-size: 1.15rem; font-weight: 650; }
+p { margin: 0; } section { display: grid; gap: 14px; }
+.eyebrow { font: 500 .78rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.lede { font-size: 1.15rem; color: var(--fg2); max-width: 66ch; }
+.claim { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 18px 20px; display: grid; gap: 10px; max-width: 78ch; }
+.claim strong { color: var(--accent); }
+code, .num { font-family: var(--mono); font-size: .9em; }
+ul, ol { margin: 0; padding-left: 1.3em; display: grid; gap: 6px; }
+.tablewrap, .svgwrap { overflow-x: auto; }
+table { border-collapse: collapse; font-size: .86rem; font-variant-numeric: tabular-nums; min-width: 100%; }
+th, td { text-align: right; padding: 6px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { font-weight: 600; color: var(--fg2); background: var(--panel); position: sticky; top: 0; }
+td:first-child, th:first-child, td:nth-child(2), th:nth-child(2) { text-align: left; }
+td.wrap, th.wrap { white-space: normal; text-align: left; min-width: 16ch; }
+td .d { display: block; color: var(--muted); font-size: .78rem; }
+.verdicts td { vertical-align: top; }
+.chip { display: inline-block; font: 600 .72rem/1 var(--body); letter-spacing: .04em; text-transform: uppercase; padding: 5px 8px; border-radius: 4px; }
+.chip.ok { background: var(--chip-ok); color: var(--chip-ok-fg); }
+.chip.no { background: var(--chip-no); color: var(--chip-no-fg); }
+.chip.mid { background: var(--chip-mid); color: var(--chip-mid-fg); }
+.figs { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px; }
+figure.chart { margin: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px; display: grid; gap: 8px; min-width: 0; }
+figcaption { font-weight: 600; font-size: .92rem; }
+svg { width: 100%; height: auto; display: block; min-width: 380px; }
+svg .grid { stroke: var(--grid); stroke-width: 1; }
+svg .zero { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+svg .tick { fill: var(--muted); font: 11px var(--mono); }
+svg .axis { fill: var(--fg2); font: 11.5px var(--body); }
+svg .dlabel { fill: var(--fg2); font: 11.5px var(--body); }
+svg .pt { stroke: var(--panel); stroke-width: 2; cursor: default; }
+svg circle.pt:hover, svg rect.pt:hover { stroke: var(--fg); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; color: var(--fg2); }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+.note { font-size: .88rem; color: var(--muted); max-width: 78ch; }
+.steps { counter-reset: s; list-style: none; padding: 0; display: grid; gap: 14px; }
+.steps li { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 6px; }
+.steps li b { font-family: var(--display); font-size: 1.05rem; }
+pre { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 12px 14px; overflow-x: auto; font: .84rem/1.5 var(--mono); margin: 0; }
+#tip { position: fixed; pointer-events: none; background: var(--fg); color: var(--bg); font: 12px var(--mono); padding: 5px 8px; border-radius: 4px; z-index: 20; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+svg .glabel { fill: var(--fg2); font: 12px var(--body); }
+svg .cell-obs { fill: var(--grid); }
+svg .cell-miss { fill: var(--s2); }
+svg .origin { stroke: var(--fg); stroke-width: 1.5; stroke-dasharray: 4 3; }
+svg .outage { fill: var(--s2); opacity: .10; }
+svg .truth { fill: none; stroke: var(--muted); stroke-width: 2; }
+svg .filled { fill: none; stroke: var(--s2); stroke-width: 3; }
+svg .obs { fill: var(--s1); stroke: var(--panel); stroke-width: 1.5; }
+svg .target { fill: none; stroke: var(--fg); stroke-width: 2; }
+.legend i.k-obs { background: var(--s1); } .legend i.k-miss { background: var(--s2); }
+.toc { display: flex; flex-wrap: wrap; gap: 8px; font-size: .88rem; }
+.toc a { text-decoration: none; border: 1px solid var(--rule); background: var(--panel); border-radius: 999px; padding: 4px 12px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.tile { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 4px; }
+.tile .big { font: 650 1.9rem/1.1 var(--display); color: var(--accent); }
+.tile .lab { font-size: .88rem; color: var(--fg2); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.card { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 14px 16px; display: grid; gap: 8px; align-content: start; }
+.card h3 { font-size: 1.05rem; }
+.card .id { font: 600 .78rem/1 var(--mono); color: var(--muted); }
+.card p { font-size: .93rem; }
+.card .test { color: var(--fg2); font-size: .88rem; }
+.terms { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; font-size: .93rem; max-width: 78ch; margin: 0; }
+.terms dt { font-weight: 600; } .terms dd { margin: 0; color: var(--fg2); }
+.result { display: grid; gap: 12px; }
+.result h3 { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+details { background: var(--panel); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 14px; }
+details > summary { cursor: pointer; font-weight: 600; }
+details[open] > summary { margin-bottom: 10px; }
+details .tablewrap { margin-bottom: 10px; }
+.wtable td, .wtable th { white-space: normal; text-align: left; vertical-align: top; }
+</style>
+
+<main>
+<header style="display:grid;gap:14px">
+  <p class="eyebrow">Проект 04 · шаги 1 и 1b · синтетические данные, 6 сенсоров · только dev-данные</p>
+  <h1>Почему длинные пропуски вредят GRU-прогнозу</h1>
+  <p class="lede">Когда показания пропадают длинными блоками, GRU использует старые заполненные значения так, как будто они новые. Нужная информация при этом всё ещё есть во входном окне. Поэтому большая часть лишней ошибки — это сбой модели, а не потеря информации.</p>
+  <nav class="toc"><a href="#problem">1. Задача</a><a href="#ideas">2. Четыре объяснения</a><a href="#method">3. Эксперименты</a><a href="#results">4. Результаты</a><a href="#why">5. Почему GRU этому не учится</a><a href="#conclusion">6. Вывод</a><a href="#next">7. Следующие шаги</a><a href="#details">Таблицы по сидам</a></nav>
+</header>
+
+<div class="tiles">
+  <div class="tile"><span class="big">{{EXCESS_RANGE}}</span><span class="lab">разрыва в ошибке GRU — это сбой модели, а не потерянная информация (3 из 3 сидов)</span></div>
+  <div class="tile"><span class="big">{{KF_SENS_0}} → {{KF_SENS_9}}</span><span class="lab">лучшее возможное доверие к последнему значению сенсора 0, от возраста 0 до 9+</span></div>
+  <div class="tile"><span class="big">{{GRU_SENS_0}} → {{GRU_SENS_9}}</span><span class="lab">доверие GRU к тому же значению: оно растёт, а не падает</span></div>
+</div>
+
+<section id="problem">
+  <h2>1. Задача</h2>
+  <p class="prose">Шесть сенсоров дают по одному показанию на каждом шаге времени. Модель читает последние 24 шага всех шести сенсоров. Затем она предсказывает сенсор 0 на шесть шагов вперёд. Часть показаний пропущена. До того как модель видит данные, каждое пропущенное показание заменяется последним известным значением этого сенсора. Это называется forward fill (заполнение вперёд).</p>
+  <dl class="terms">
+    <dt>Окно</dt><dd>24 прошлых шага, которые модель читает для одного прогноза.</dd>
+    <dt>Точка прогноза</dt><dd>Последний шаг окна. Отсюда начинается прогноз.</dd>
+    <dt>Возраст</dt><dd>Сколько шагов назад сенсор дал последнее настоящее показание. Возраст 0 — свежее показание.</dd>
+    <dt>GRU</dt><dd>Маленькая рекуррентная нейросеть (8 нейронов) из стартового кода курса.</dd>
+    <dt>Persistence</dt><dd>Простой базовый прогноз: повторить последнее значение сенсора 0.</dd>
+    <dt>MSE, RMSE</dt><dd>Средняя квадратичная ошибка и корень из неё. Меньше — лучше.</dd>
+  </dl>
+  <p class="prose">Данные курса удаляют 25% показаний двумя способами. Маска scatter удаляет отдельные показания случайно. Маска block удаляет серии по 8 шагов. Обе удаляют одинаковое число показаний на сенсор.</p>
+  {{MASK_DIAGRAM}}
+  <p class="prose">GRU обучается с маской scatter. На маске block её ошибка растёт во всех сидах. Persistence тоже становится хуже. Вопрос этого шага: почему то же количество пропусков вредит сильнее, когда пропуски идут блоками?</p>
+  {{BASELINE_CHART}}
+  <p class="note">Линия фильтра Калмана объяснена в разделе 3. У сида 942 масштаб ошибки примерно в 3 раза больше, чем у других сидов, поэтому его столбцы длиннее.</p>
+</section>
+
+<section id="ideas">
+  <h2>2. Четыре возможных объяснения</h2>
+  <p class="prose">Мы записали четыре объяснения до запуска любого эксперимента. Для каждого мы также записали результат, который его опровергает. Они зафиксированы в <code>research/HYPOTHESES.md</code>.</p>
+  {{STALE_DIAGRAM}}
+  <div class="cards">
+    <div class="card"><span class="id">H1 · идея из задания</span><h3>Старое значение в точке прогноза</h3>
+      <p>Блок, который заканчивается в точке прогноза, оставляет старое значение на последнем шаге. Модель читает его как новое.</p>
+      <p class="test">Неверна, если: разрыв в ошибке такой же, когда сенсор 0 свежий.</p></div>
+    <div class="card"><span class="id">H2</span><h3>Потерянная история</h3>
+      <p>Любая дыра в 8 шагов внутри окна портит память GRU, где бы эта дыра ни была.</p>
+      <p class="test">Неверна, если: дыра далеко от точки прогноза не добавляет ошибки.</p></div>
+    <div class="card"><span class="id">H3</span><h3>Не видела при обучении</h3>
+      <p>Обучение на scatter почти никогда не показывает старые значения. Поэтому GRU не научилась доверять им меньше.</p>
+      <p class="test">Неверна, если: лучшая возможная модель теряет столько же, сколько GRU, или обучение на block не помогает.</p></div>
+    <div class="card"><span class="id">H4</span><h3>Нет помощи от других сенсоров</h3>
+      <p>Все сенсоры зависят от одних и тех же скрытых факторов. Когда сенсор 0 старый, GRU не использует вместо него свежие сенсоры.</p>
+      <p class="test">Неверна, если: пропуски на других сенсорах важны так же, как пропуски на сенсоре 0.</p></div>
+  </div>
+</section>
+
+<section id="method">
+  <h2>3. Эксперименты и почему мы их выбрали</h2>
+  <p class="prose">Два инструмента делают эксперименты честными.</p>
+  <ul class="prose">
+    <li>Фильтр Калмана как измерительная линейка. Данные получены из известной линейной модели. Мы восстановили её точные параметры из генератора данных. Фильтр Калмана с этими параметрами даёт лучший возможный прогноз по тем же 24 шагам. Если фильтр Калмана тоже теряет точность на блоках, информация действительно потеряна. Если теряет только GRU, проблема в модели. Фильтр Калмана — инструмент измерения, а не конкурирующий метод.</li>
+    <li>Парные окна. Каждая модель и каждая маска оцениваются на одних и тех же окнах и одних и тех же таргетах. Маска только удаляет входы. Поэтому разница между масками не может прийти от более лёгких или трудных окон.</li>
+  </ul>
+  <div class="tablewrap"><table class="wtable">
+    <tr><th>Эксперимент</th><th>Что мы сделали</th><th>Почему такой дизайн</th><th>Проверяет</th></tr>
+    <tr><td>E0</td><td>Повторили стартовые запуски с 5 случайными инициализациями. Посчитали, насколько стары значения в точке прогноза.</td><td>Для честной проверки сначала нужны те же числа, что в курсе, и мера того, как часто встречаются старые значения.</td><td>Основа</td></tr>
+    <tr><td>E1</td><td>Оценили каждое окно под обеими масками. Сгруппировали окна по возрасту сенсора 0 в точке прогноза.</td><td>Если H1 верна, вся лишняя ошибка сидит в окнах со старым значением сенсора 0.</td><td>H1</td></tr>
+    <tr><td>E2</td><td>Добавили в каждое окно один пропуск на 8 шагов. Сдвигали его от точки прогноза до 16 шагов назад.</td><td>Это контролируемое изменение. Меняется только положение пропуска, поэтому H1 отделяется от H2.</td><td>H2, H4</td></tr>
+    <tr><td>E3</td><td>Запустили фильтр Калмана на тех же 24-шаговых окнах. Разделили разрыв GRU на потерянную информацию и сбой модели.</td><td>Только лучшая возможная модель может сказать, пропала информация или просто не используется.</td><td>H3</td></tr>
+    <tr><td>E4, E4b</td><td>Обучили GRU на scatter, block или смеси 50/50 с тем же бюджетом. Потом обучали дольше и с большей сетью. Измерили, насколько прогноз доверяет старому значению.</td><td>Если H3 верна, обучение на блоках научит GRU доверять старым значениям меньше.</td><td>H3</td></tr>
+    <tr><td>E5</td><td>Дали сенсору 0 и 5 другим сенсорам разные маски, по схеме 2 x 2.</td><td>Это показывает, какие пропуски добавляют ошибку: на сенсоре 0, на других или на обоих.</td><td>H4</td></tr>
+  </table></div>
+  <p class="note">Каждый результат использует 3 сида данных (940, 941, 942) и 5 инициализаций GRU на сид. Единица повторения — сид. Мы показываем каждый сид, а не только среднее. Использовались только dev-данные. Тестовые данные ни разу не загружались.</p>
+</section>
+
+<section id="results">
+  <h2>4. Результаты</h2>
+
+  <div class="result">
+    <h3>Главный результат: информация всё ещё есть</h3>
+    <p class="prose">Оранжевая часть — разрыв фильтра Калмана. Это информация, которую маска block действительно удаляет. Синяя часть — лишний разрыв GRU. Это {{EXCESS_RANGE}} от всего разрыва, в 3 из 3 сидов. Значит, GRU теряет точность, которую лучшая модель сохраняет.</p>
+    {{GAP_CHART}}
+  </div>
+
+  <div class="result">
+    <h3>H1: старые значения в точке прогноза запускают проблему <span class="chip mid">Триггер, не причина</span></h3>
+    <p class="prose">Маска block делает сенсор 0 старым в точке прогноза примерно в 1 окне из 5. Маска scatter — примерно в 1 из 50.</p>
+    {{EXPOSURE_CHART}}
+    <p class="prose">На тех же окнах persistence ничего не теряет, когда сенсор 0 свежий. GRU тоже теряет больше всего там, где сенсор 0 старый. Но при возрасте 5 и больше фильтр Калмана на тех же окнах теряет в несколько раз меньше (3 из 3 сидов). Значит, старое значение запускает проблему, но GRU делает её намного хуже.</p>
+    {{PAIRED_CHART}}
+    <p class="note">Ось x не в масштабе. Для возрастов от 1 до 4 есть только от 11 до 45 окон на сид, поэтому эти точки шумные. Окна со старыми значениями приходят всего из 21–23 разных пропусков на сид. Эксперимент E2 ниже — более чистая проверка.</p>
+  </div>
+
+  <div class="result">
+    <h3>H2: потерянная история не важна <span class="chip no">Отвергнута</span></h3>
+    <p class="prose">Мы двигали один пропуск на 8 шагов через каждое окно. Пропуск, который кончается за 8 или 16 шагов до точки прогноза, стоит любой модели около 0 (3 из 3 сидов). Ошибку добавляет только пропуск, который доходит до точки прогноза. На сенсоре 0 он стоит GRU {{S0_GRU}} MSE, а фильтру Калмана только {{S0_KF}}.</p>
+    <div class="figs">{{E2_CHARTS}}</div>
+    <p class="note">Ось x не в масштабе. Сид 942 определяет среднее. Смотрите таблицы по сидам в конце.</p>
+  </div>
+
+  <div class="result">
+    <h3>H3: GRU не учится доверять старым значениям меньше <span class="chip mid">Наполовину верна</span></h3>
+    <p class="prose">H3 права в том, что проблема в модели. Но обучение на масках block с тем же бюджетом её не исправляет. Оно полностью убирает разрыв только в 1 сиде (941) и частично в 1 сиде (942).</p>
+    {{TRAIN_CHART}}
+    <p class="prose">Следующий график показывает причину. Мы немного меняли последнее настоящее значение сенсора 0 и измеряли, насколько сдвигается прогноз. Лучший прогноз доверяет значению тем меньше, чем оно старше. GRU доверяет старым значениям так же или больше. Обучение на block опускает кривую, но она остаётся плоской. Только в 4 раза более долгое обучение с 32 нейронами немного загибает её вниз при большом возрасте. Вход с возрастом меняет RMSE на block не больше чем на {{AGE_VS_ZERO}}, то есть GRU его не использует.</p>
+    {{SENS_CHART}}
+  </div>
+
+  <div class="result">
+    <h3>H4: старые значения других сенсоров тоже вредят <span class="chip ok">Подтверждена, шире ожидаемого</span></h3>
+    <p class="prose">Мы давали пропуски-блоки только сенсору 0, только 5 другим сенсорам или всем. Для GRU обе части добавляют ошибку. Каждая часть отдельно даёт {{FAC_SHARE}} полного разрыва GRU. Для фильтра Калмана каждая часть стоит меньше, чем для GRU, в 3 из 3 сидов. Пропуски только на сенсоре 0 почти ничего не стоят фильтру Калмана. Значит, GRU доверяет старому заполненному значению любого сенсора, а не только сенсора 0. Это шире, чем ожидала H4.</p>
+    {{FACTORIAL_CHART}}
+  </div>
+</section>
+
+<section id="why">
+  <h2>5. Почему GRU не учится снижать вес старых значений</h2>
+  <p class="prose">Разделы 1–4 показывают, что идёт не так. GRU доверяет старому заполненному значению так же, как свежему. Больше обучения, больше нейронов и обучение на block это не исправляют. Этот раздел спрашивает, почему. Мы проверили два новых объяснения, H5 и H6. Тесты и пороги мы записали до запуска (<code>research/HYPOTHESES.md</code>, Step 1b).</p>
+  <div class="cards">
+    <div class="card"><span class="id">H5 · память</span><h3>Память забывает, насколько старо значение</h3>
+      <p>Память GRU (скрытое состояние, 8 чисел) не хранит время с последнего настоящего показания. Когда вход перестаёт меняться, память за несколько шагов приходит в неподвижное состояние. После этого значение возрастом 3 шага и возрастом 10 шагов выглядят одинаково. Выходной слой не может снизить вес того, чего нет в памяти.</p>
+      <p class="test">Неверна, если: простая проба читает «возраст 3 или больше» из памяти с balanced accuracy 0.75 или выше, или новый выходной слой на замороженной памяти убирает половину лишней ошибки или больше.</p></div>
+    <div class="card"><span class="id">H6 · сигнал обучения</span><h3>Таргеты слишком шумные, чтобы научить снижению веса</h3>
+      <p>GRU могла бы выучить снижение веса, но настоящие таргеты шумные. Полезный сигнал для старых окон мал по сравнению с шумом, поэтому градиентный спуск его не находит.</p>
+      <p class="test">Неверна, если: та же GRU, обученная на чистом таргете без шума, всё ещё сохраняет больше половины лишней ошибки или всё ещё доверяет значению возрастом 9 шагов на 0.15 или больше.</p></div>
+  </div>
+  <div class="tablewrap"><table class="wtable">
+    <tr><th>Эксперимент</th><th>Что мы сделали</th><th>Почему такой дизайн</th><th>Проверяет</th></tr>
+    <tr><td>E6a, пробы</td><td>Обучили маленький линейный классификатор и классификатор ближайших соседей на памяти GRU в точке прогноза. Задача: значение сенсора 0 старше 3 шагов или нет? Обучение на train-окнах, оценка на dev-окнах.</td><td>Проба (probe) спрашивает, какая информация есть в памяти. Перемешанные метки дают уровень угадывания. Сырое входное окно даёт верхнюю границу.</td><td>H5</td></tr>
+    <tr><td>E6b, новый выходной слой</td><td>Зафиксировали GRU. Обучили новый линейный и квадратичный выходной слой от её памяти к таргету.</td><td>Если информация есть в памяти, лучший выходной слой её использует. Если нет, никакой выходной слой не поможет.</td><td>H5</td></tr>
+    <tr><td>E6c, динамика</td><td>Держали вход неизменным и смотрели, как успокаивается память. Измерили якобиан одного шага. Также останавливали сенсор 0 на k = 0–16 шагов и измеряли доверие к его последнему значению.</td><td>Система, которая быстро забывает, не может считать прошедшее время. Якобиан (сколько памяти переносится за шаг) измеряет скорость забывания.</td><td>H5</td></tr>
+    <tr><td>E7, чистый учитель</td><td>Обучили ту же GRU, с тем же бюджетом и инициализациями, на прогнозе Калмана по тем же 24 шагам вместо настоящего таргета. Потом вернули шум в 4 дозах. Также попробовали настоящие таргеты со старыми окнами, показанными в 5 раз чаще, и 48 эпох.</td><td>Это дистилляция: учитель даёт лучший ответ для каждого окна без шума. Если H6 верна, чистый таргет научит снижению веса.</td><td>H6</td></tr>
+  </table></div>
+  <p class="note">Учитель-Калман использует истинную модель и только показания внутри окна. Никакое будущее значение не попадает во вход. Это инструмент для проверки обучения, а не метод, который мы предлагаем.</p>
+
+  <div class="result">
+    <h3>H5: память знает, что значение старое, но не знает, насколько <span class="chip mid">Частично верна</span></h3>
+    <p class="prose">Проба отличает «возраст 3 или больше» от «возраст 0–2» с balanced accuracy {{PR_SC}} для GRU, обученной на scatter, и {{PR_MX}} для GRU, обученной на смеси. Угадывание даёт 0.5. По нашему же порогу эта часть H5 проваливается в {{H5A_HITS}} из 3 сидов для GRU на смеси. Но эта задача лёгкая: маска на входе уже говорит «сейчас пропуск» при любом возрасте от 1.</p>
+    <p class="prose">Поэтому после первого запуска мы добавили более трудную пробу. Только среди старых окон: значение старше 3 шагов или только 1–2? Входное окно отвечает на это с точностью {{PW_IN}}. Память GRU отвечает только с {{PW}}. Память хранит «старое или нет» и теряет «насколько старое».</p>
+    {{PROBE_CHART}}
+    <p class="prose">Динамика показывает почему. Когда вход неизменен, отношение каждого шага изменения памяти к предыдущему: {{STEP_RATIO}}. Наибольшее собственное значение якобиана {{RADIUS}} (1 означало бы идеальную память). Поэтому память успокаивается примерно за 3–5 шагов. Число шагов удержания k читается обратно из памяти с R² не выше {{K_R2}}.</p>
+    <p class="prose">График ниже показывает, как это влияет на прогноз. Когда сенсор 0 останавливается, фильтр Калмана доверяет его последнему значению всё меньше с каждым шагом ({{HELD_KF}}). GRU доверяет ему больше ({{HELD_GRU}}), и кривая плоская уже примерно после 3 шагов. Именно так и ведёт себя память, которая успокоилась.</p>
+    {{HELD_CHART}}
+    <p class="prose">Новый выходной слой не помогает. Мы зафиксировали GRU, обученную на смеси, и обучили новый линейный или квадратичный выходной слой от её памяти. Он убирает не больше {{REMOVED_MAX}} лишней ошибки на старых окнах. В {{N_WORSE}} из {{N_REFIT}} случаев (3 сида, 2 выходных слоя) ошибка становится больше. Значит, проблема не в выходном слое. Нужной информации нет в памяти.</p>
+    {{REFIT_CHART}}
+  </div>
+
+  <div class="result">
+    <h3>H6: чистый таргет не учит снижению веса <span class="chip no">Отвергнута</span></h3>
+    <p class="prose">При обучении на чистом таргете Калмана GRU сохраняет {{T0_RATIO}} лишней ошибки GRU с настоящими таргетами. Для H6 нужно было 0.5 или меньше. Её доверие к значению возрастом 9 шагов остаётся {{T0_SENS9}}. Фильтр Калмана даёт такому значению {{KF9}}. Оба порога не пройдены в 3 из 3 сидов. Значит, шум в таргетах — не причина.</p>
+    {{RATIO_CHART}}
+    <p class="prose">Две проверки сработали не так, как планировалось, и мы о них сообщаем. Первая: дозы шума не дают чистого тренда. От нуля шума до полного шума лишняя ошибка на старых окнах меняется по сидам так: {{DOSE}}. Она растёт в двух сидах и падает в одном. Вторая: учитель с полным шумом (a = 1) должен совпадать с настоящими таргетами, но даёт {{A1_RATIO}} их лишней ошибки. Размер шума правильный, но настоящие ошибки соседних окон коррелированы (корреляция с лагом 1: {{ACORR}}), а наш добавленный шум нет. Вердикт по H6 от этих проверок не зависит: чистый учитель также сохраняет {{T0_VS_T1}} ошибки шумного учителя в той же постановке.</p>
+    <p class="prose">Самый показательный результат — показ старых окон в 5 раз чаще. Это снижает доверие к сенсору 0 при любом возрасте, даже при возрасте 0 ({{O5_SENS0}} против {{REAL_SENS0}} с настоящими таргетами). Лишняя ошибка на свежих окнах растёт в 3 из 3 сидов (настоящие таргеты → старые окна 5x: {{FRESH_SHIFT}}). GRU просто снижает один общий вес. Она не учит вес, который зависит от возраста.</p>
+    {{E7_SENS_CHART}}
+    <p class="prose">Более долгое обучение начинает немного помогать. На 48 эпохах кривая доверия начинает загибаться вниз с возрастом (доверие при возрасте 9+: {{E48_SENS9}}). Но GRU всё ещё сохраняет {{E48_RATIO}} лишней ошибки. Выучить снижение веса возможно, но для этой GRU очень медленно.</p>
+  </div>
+</section>
+
+<section id="conclusion">
+  <h2>6. Вывод</h2>
+  <div class="claim">
+    <p><strong>Механизм: доверие к заполненному старому значению.</strong> Forward fill делает пропуск похожим на обычное постоянное показание. GRU использует это заполненное значение с тем же весом, что и свежее. Лучший прогноз даёт ему тем меньший вес, чем оно старше.</p>
+    <p>Обучение на scatter почти никогда не показывает значения старше 2 шагов, поэтому GRU это правило не было нужно. Информация о возрасте есть во входе, но эта маленькая GRU не превращает её в снижение веса при таком бюджете обучения. Обучение на block с тем же бюджетом этого не меняет.</p>
+    <p><strong>Почему (Step 1b).</strong> Память GRU успокаивается за несколько шагов, когда вход перестаёт меняться. Она хранит «это значение старое», но забывает «насколько старое». Никакой выходной слой не может достать из неё снижение веса. Чистый таргет тоже этому не учит. С большим числом старых окон GRU только снижает один общий вес для всех возрастов. Снижение веса, зависящее от возраста, требует умножения значения на возраст, и эта GRU учится этому очень медленно.</p>
+  </div>
+  <div class="tablewrap"><table class="wtable">
+    <tr><th>ID</th><th>Объяснение</th><th>Вердикт</th><th>Главное доказательство</th></tr>
+    <tr><td>H1</td><td>Старое значение в точке прогноза</td><td><span class="chip mid">Триггер, не причина</span></td><td>Persistence ничего не теряет, когда сенсор 0 свежий. Фильтр Калмана теряет в 3–50 раз меньше на тех же окнах.</td></tr>
+    <tr><td>H2</td><td>Потерянная история</td><td><span class="chip no">Отвергнута</span></td><td>Пропуск за 8 или 16 шагов до точки прогноза стоит около 0 (3 из 3 сидов).</td></tr>
+    <tr><td>H3</td><td>Не видела при обучении</td><td><span class="chip mid">Наполовину верна</span></td><td>{{EXCESS_RANGE}} разрыва — сбой модели. Обучение на block не учит GRU доверять старым значениям меньше.</td></tr>
+    <tr><td>H4</td><td>Нет помощи от других сенсоров</td><td><span class="chip ok">Подтверждена, шире</span></td><td>Пропуски на 5 других сенсорах стоят GRU {{OTHERS_GRU}} MSE, а фильтру Калмана {{OTHERS_KF}}.</td></tr>
+    <tr><td>H5</td><td>Память забывает, насколько старо значение</td><td><span class="chip mid">Частично верна</span></td><td>«Старое или нет» есть в памяти ({{PR_MX}}), «насколько старое» в основном нет ({{PW}} против {{PW_IN}} по входу). Наибольшее собственное значение якобиана {{RADIUS}}. Новый выходной слой убирает не больше {{REMOVED_MAX}} лишней ошибки.</td></tr>
+    <tr><td>H6</td><td>Таргеты слишком шумные для обучения</td><td><span class="chip no">Отвергнута</span></td><td>Чистый учитель сохраняет {{T0_RATIO}} лишней ошибки. Доверие при возрасте 9+ остаётся {{T0_SENS9}} (3 из 3 сидов).</td></tr>
+  </table></div>
+  <h3>Ограничения</h3>
+  <ul class="prose">
+    <li>Данные синтетические: 6 сенсоров из 5 общих линейных факторов. Настоящие сенсоры с нелинейным поведением не проверялись.</li>
+    <li>Проверялась только стартовая GRU на 8 нейронов и одна большая версия (32 нейрона, в 4 раза больше обучения).</li>
+    <li>Три сида данных. Результаты по старым значениям опираются примерно на 21–23 пропуска на сид.</li>
+    <li>Фильтр Калмана знает истинную модель. Он показывает, что информация есть в окне. Он не показывает, что обученная модель может достичь его ошибки.</li>
+    <li>Пробы простые (линейная и ближайшие соседи). Более сложная проба могла бы найти в памяти больше информации о возрасте. Проба «насколько старое» добавлена после первого запуска.</li>
+  </ul>
+</section>
+
+<section id="next">
+  <h2>7. Следующие шаги</h2>
+  <ol class="steps">
+    <li><b>Шаг 2: доказать механизм напрямую</b>
+      <span>Оставить возраст старого значения тем же и менять только само значение. Заменить его оценкой Калмана. Если лишняя ошибка GRU исчезнет, доверие к старому значению подтверждено. Если останется, проблема в памяти GRU.</span></li>
+    <li><b>Шаг 3: напрямую проверить недостающее умножение</b>
+      <span>Step 1b показывает, что GRU трудно построить значение × f(возраст). Дать ей это произведение как готовый вход: (fill − mean) · exp(−γ<sub>j</sub> · age<sub>j</sub>). Это input decay из GRU-D (Che et al. 2018), то есть сам модуль известен. Новое здесь — проверка: при том же бюджете идёт ли теперь кривая доверия за кривой Калмана, и падает ли ошибка на старых окнах там, где не помогли чистый учитель, больше старых окон и новый выходной слой?</span></li>
+    <li><b>Альтернатива для шага 3: оценка надёжности</b>
+      <span>Предсказывать лишнюю ошибку каждого окна по тому, насколько прогноз зависит от каждого значения и насколько это значение старое. Проверить на dev-данных, находит ли это плохие окна лучше, чем один возраст сенсора 0.</span></li>
+    <li><b>Ограничение, которое уже выполняется</b>
+      <span>На этих данных GRU, обученная на scatter, ненадёжна, когда любой сенсор старше 3 шагов в точке прогноза. Persistence надёжна, только когда сенсор 0 свежий.</span></li>
+    <li><b>Заморозить, потом один раз запустить финальный тест</b>
+      <span>Заморозить утверждение, метод и все настройки. Потом один раз запустить <code>--final</code>. Также оценить маски scatter и block на тестовом периоде, чтобы эффект нового периода времени и эффект маски оставались раздельными.</span></li>
+  </ol>
+</section>
+
+<section id="details">
+  <h2>Таблицы по сидам</h2>
+  <p class="prose">Эти таблицы дают каждое число за графиками. Все значения взяты из <code>results/*.json</code>.</p>
+  <details><summary>Экспозиция: насколько стары значения в точке прогноза</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Сид</th><th>Маска</th><th>Окна</th><th>Средний age0</th><th>age0 ≥ 3</th><th>Средний возраст, все сенсоры</th><th>Старых сенсоров в точке прогноза</th><th>Показаний сенсора 0 на окно</th><th>Мин. показаний</th><th>Все сенсоры старые</th><th>Средняя длина пропуска сенсора 0</th><th>Окна / разные пропуски, age0 ≥ 5</th></tr>
+      {{EXPOSURE_ROWS}}
+    </table></div>
+    <p class="note">Возраст в шагах в точке прогноза.</p></details>
+  <details><summary>E0: базовый RMSE, 5 инициализаций GRU на сид</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Сид</th><th>Модель</th><th>Scatter</th><th>Block</th><th>Разрыв</th><th>Scatter, разброс по инициализациям</th></tr>
+      {{BASELINE_ROWS}}
+    </table></div>
+    <p class="note">Инициализация 0 точно воспроизводит <code>VALIDATION.json</code>. «Только заполнения» обнуляет входы маски и возраста. Эта версия работает так же, как две другие.</p></details>
+  <details><summary>E1 и E3: свежие и старые окна</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Сид</th><th>Свежие окна</th><th>GRU</th><th>Калман (24 шага)</th><th>Persistence</th><th>Старые окна</th><th>GRU</th><th>Калман (24 шага)</th><th>Калман, только сенсор 0</th></tr>
+      {{FRESH_STALE_ROWS}}
+    </table></div>
+    <p class="note">MSE block минус scatter на окно. Свежие: возраст сенсора 0 равен 0 под обеими масками. Старые: возраст 0 под scatter, 5 или больше под block. GRU теряет и на свежих окнах в сидах 941 и 942, где фильтр Калмана ничего не теряет.</p></details>
+  <details><summary>E2: один пропуск, сдвигаемый через окно</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Сид</th><th>Пропуск на</th><th>GRU</th><th>Калман</th><th>Калман, только сенсор 0</th><th>Persistence</th><th>GRU, наибольшая |цена| при сдвиге 8 или 16</th></tr>
+      {{E2_ROWS}}
+    </table></div>
+    <p class="note">Лишняя MSE против тех же окон без добавленного пропуска, сдвиг 0.</p></details>
+  <details><summary>E4: обучение на масках scatter, block или смеси</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Сид</th><th>Маска обучения, вход</th><th>RMSE scatter</th><th>RMSE block</th><th>Разрыв</th><th>Разрыв, разброс по инициализациям</th><th>Потеря на старых окнах (возраст 5+)</th></tr>
+      {{TRAIN_ROWS}}
+    </table></div>
+    <p class="note">Одинаковый бюджет: 12 эпох x 1600 окон, та же инициализация и порядок батчей.</p></details>
+  <details><summary>E4b: больше обучения и больше нейронов</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Сид</th><th>Маска обучения</th><th>Эпохи</th><th>Нейроны</th><th>RMSE scatter</th><th>RMSE block</th><th>Потеря на старых окнах</th><th>Доверие при возрасте 0 / 9+</th></tr>
+      {{E4B_ROWS}}
+    </table></div>
+    <p class="note">Версии с 48 эпохами и 32 нейронами в некоторых сидах переобучаются. Читайте эту таблицу ради значений доверия, а не RMSE.</p></details>
+  <details><summary>E5: схема сенсоров 2 x 2</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Сид</th><th>Ячейка масок</th><th>GRU, обучена на scatter</th><th>GRU, обучена на block</th><th>Ridge, обучена на block</th><th>Persistence</th><th>Калман</th></tr>
+      {{FACTORIAL_ROWS}}
+    </table></div>
+    <p class="note">RMSE, под каждым значением — изменение относительно ячейки «всё scatter». Ridge — простая обучаемая модель для сравнения. Она не обгоняет GRU стабильно.</p></details>
+  <details><summary>E6: пробы, новый выходной слой, динамика</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Сид</th><th>GRU</th><th>Проба: старое или нет, линейная</th><th>kNN</th><th>Проба: насколько старое, линейная</th><th>R² возраста (старые окна)</th><th>MSE GRU, возраст 3+</th><th>Новый выходной слой, свои окна</th><th>Новый выходной слой, окна смеси</th><th>Квадратичный, смесь</th><th>Калман (24 шага)</th><th>Собственное значение якобиана</th><th>R² числа шагов удержания</th></tr>
+      {{E6_ROWS}}
+    </table></div>
+    <p class="note">Значения проб — balanced accuracy, среднее по 5 инициализациям (0.5 = угадывание). Значения выходных слоёв — MSE на dev-окнах block с возрастом сенсора 0 от 3. Отрицательный R² значит хуже, чем константа.</p></details>
+  <details><summary>E7: чистый учитель, дозы шума, старые окна 5x, 48 эпох</summary>
+    <div class="tablewrap"><table>
+      <tr><th>Сид</th><th>Таргет обучения</th><th>RMSE scatter</th><th>RMSE block</th><th>Лишняя ошибка, возраст 3+</th><th>Лишняя ошибка, возраст 0</th><th>Относительно настоящих таргетов</th><th>Доверие при возрасте 0 / 9+</th></tr>
+      {{E7_ROWS}}
+    </table></div>
+    <p class="note">Лишняя ошибка = MSE GRU минус MSE Калмана (24 шага) на тех же dev-окнах block. Мелким шрифтом — разброс по 5 инициализациям. Все варианты используют train-окна со смешанной маской и 12 эпох, если не указано иное.</p></details>
+  <details><summary>Воспроизведение</summary>
+  <pre>P=miniconda3/envs/proteinttt/bin/python   # base env numpy is broken
+export OMP_NUM_THREADS=1                   # without it, each run is about 20x slower
+$P check_data.py && $P research/test_research.py
+$P research/e0_baseline_exposure.py && $P research/e1_age_stratified.py
+$P research/e2_block_position.py && $P research/e3_window_oracle.py
+$P research/e4_training_masks.py && $P research/e4b_budget_capacity.py
+$P research/e5_cross_sensor.py && $P research/e6_representation.py
+$P research/e7_distillation.py && $P report/build_report.py</pre>
+  <p class="note">Только CPU. Весь набор занимает около 1 минуты на 64 ядрах. Скрипт строит обе версии отчёта: <code>report/report.html</code> (английская) и <code>report/report_ru.html</code> (русская).</p></details>
+</section>
+</main>
+<div id="tip" hidden></div>
+<script>
+(function () {
+  var tip = document.getElementById('tip');
+  document.addEventListener('mousemove', function (e) {
+    var t = e.target.closest && e.target.closest('[data-tip]');
+    if (!t) { tip.hidden = true; return; }
+    tip.textContent = t.getAttribute('data-tip');
+    tip.hidden = false;
+    var x = Math.min(e.clientX + 12, window.innerWidth - tip.offsetWidth - 8);
+    tip.style.left = x + 'px';
+    tip.style.top = (e.clientY + 14) + 'px';
+  });
+})();
+</script>
