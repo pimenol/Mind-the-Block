@@ -72,3 +72,9 @@ On real data there is no true model, so no oracle. The ridge reference is a lear
 |---|---|---|
 | E8 | T1-T4, H2-H6 on a transformer | Transformer and torch GRU on the synthetic seeds: excess over the window oracle, trust by age, moving outage (E2), held sensor 0 curve, probes on the final representation, attention from the last token by age, mixed training, clean teacher, 48 epochs. |
 | E9 | R1, R2, H3 on real data | Beijing PM2.5 with imposed scatter and block masks on top of the natural gaps: gap by age bin, trust curve against the ridge reference, scatter vs mixed training, GRU and transformer. |
+
+### Step 1c verdicts (2026-11-17, after E8 and E9)
+
+By the registered criteria: T1 holds in 3 of 3 seeds (model-failure share 0.70 to 0.92). T2 holds in 2 of 3 seeds (trust at age 9+ 0.27, 0.21, 0.12). T3 is falsified in 3 of 3 seeds ("how old" probe 0.56 to 0.57): the transformer also drops the age. T4 holds in 2 of 3 seeds (0.26, 0.16, 0.11). R1 holds in 2 of 3 stations (0.66, 0.74, 0.48). R2 holds in 3 of 3 stations: the reference trust falls from age 0 to 9+, the GRU trust rises.
+
+Not registered, reported as description: transformer attention from the last token is close to uniform (0.036 to 0.059 per step) and does not change with age. On real data the GRU error on stale windows is only 1% to 11% above the ridge reference.

@@ -4,9 +4,10 @@ This file gives guidance to Claude Code (claude.ai/code) for work in this reposi
 
 Course research project (Project 04, course link: RNNs and GRUs). The same
 fraction of readings can be missing in long bursts or in scattered gaps. The
-question: in the burst case, why can a forecaster fail? The code is pure NumPy on CPU. There is no
-deep-learning framework and no GPU. The data is a synthetic six-sensor benchmark,
-not the Beijing dataset, so every claim stays scoped to this benchmark.
+question: in the burst case, why can a forecaster fail? The code is NumPy on CPU, with no GPU.
+Step 1c adds PyTorch (CPU) only for `research/torch_models.py`, E8 and E9. The main
+data is a synthetic six-sensor benchmark. E9 also uses real UCI Beijing PM2.5 data
+(`research/real_data.py`, downloaded to the gitignored `data/real/`).
 
 The repository is a git repo on branch `main`. The shipped starter (`starter.py`,
 `check_data.py`, `generate_data.py`, `data/`) comes from the course. All research
@@ -60,7 +61,8 @@ count, a result must separate two explanations that make different predictions.
 ## Status
 
 Step 1 (mechanism) is done, commits "Step 1a" to "Step 1h". Step 1b (why the
-GRU does not learn age discounting, H5 and H6, E6 and E7) is done. Step 2 (a
+GRU does not learn age discounting, H5 and H6, E6 and E7) is done. Step 1c (a
+small transformer and real Beijing data, T1 to T4, R1, R2, E8 and E9) is done. Step 2 (a
 targeted training change, a reliability diagnostic, or a scoped limit) and the
 frozen final evaluation are not started.
 
@@ -77,6 +79,10 @@ cause is that the forecast does not discount a held value by its age.
 | H4 | Cross-sensor substitution failure | Holds, but wider. Outages on the 5 other sensors also cost the GRU much more than the oracle. |
 | H5 | The hidden state forgets how old a value is | Partly right. Probes read "old or not" (0.71 to 0.81) but not "how old" (0.64 to 0.69, input 0.99 to 1.00). Jacobian radius 0.59 to 0.65. A new readout on frozen h removes at most 1% of the stale excess. |
 | H6 | Targets too noisy to learn the discount | Rejected (3 of 3). A clean window-oracle teacher keeps 0.81 to 1.07 of the stale excess. Oversampling stale windows lowers one fixed weight at all ages. |
+| T1, T2 | A small transformer fails the same way | Holds. Model-failure share 0.70 to 0.92 (3 of 3). Trust at age 9+ 0.12 to 0.27 (2 of 3 at 0.15 or more). Attention is close to uniform. |
+| T3 | The transformer keeps "how old" but does not use it | Rejected (3 of 3). "How old" probe 0.56 to 0.57. Both architectures drop the age. |
+| T4 | Adam fixes the GRU | No. The PyTorch GRU with Adam keeps trust 0.11 to 0.26 at age 9+. |
+| R1, R2 | Same failure on real Beijing PM2.5 | Holds. Stale windows carry 0.48 to 0.74 of the GRU gap. Ridge trust falls with age, GRU trust rises (3 of 3 stations). The cost is small: 1% to 11% on stale windows. |
 
 Numbers that later steps build on:
 
@@ -121,6 +127,8 @@ python research/e4b_budget_capacity.py     # E4b: epochs x hidden units (12, 48)
 python research/e5_cross_sensor.py         # E5: 2x2 sensor factorial mask and ridge reference
 python research/e6_representation.py      # E6: probes on h, readout refit, fixed-point dynamics
 python research/e7_distillation.py         # E7: window-oracle teacher, noise doses, stale oversampling, 48 epochs
+python research/e8_transformer.py          # E8: tiny transformer and PyTorch GRU on the synthetic seeds (needs torch)
+python research/e9_beijing.py              # E9: Beijing PM2.5, 3 target stations, ridge reference (downloads UCI data once)
 python report/build_report.py              # results/*.json + report/template{,_ru}.html -> report/report{,_ru}.html
 ```
 
@@ -163,6 +171,10 @@ BLAS thread variables to 1. If you run on a login node, reduce `procs` in
 - `test_research.py` is a plain script, not pytest. It runs every `test_*`
   function and prints `PASS`.
 - `HYPOTHESES.md` holds the pre-registered hypotheses and falsifiers.
+- `torch_models.py` has a tiny transformer and an 8-unit PyTorch GRU with the
+  same `predict` interface as `starter.GRU`, trained with AdamW in the same
+  minibatch order. `real_data.py` builds the Beijing data in the `common.load`
+  format and never returns the real test period (from 2016-09).
 
 ### Report (`report/`)
 
