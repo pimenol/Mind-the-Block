@@ -88,6 +88,30 @@ def test_no_test_partition_access():
   assert not any(k.startswith('test_') for k in load(940))
 
 
+def test_gru_step_matches_predict():
+  import e6_representation as e6
+  d = load(940)
+  s = make_split(d, 'dev', 'block', 960, 'zero')
+  model = train_gru(s['x'][:64], s['y'][:64], 940, 0, epochs=1, per_epoch=64)
+  h = np.zeros((64, 8))
+  for t in range(s['x'].shape[1]):
+    h = e6.gru_step(model.p, s['x'][:64, t], h)
+  assert np.allclose(h, model.predict(s['x'][:64], cache=True)[1])
+
+
+def test_window_kf_split_default_and_block_default():
+  import e2_block_position as e2
+  import e3_window_oracle as e3
+  d = load(941)
+  m, _ = oracle.recover(941)
+  s = make_split(d, 'dev', 'block', 961, 'zero')
+  mean, var = e3.window_kf(s, m, return_var=True)
+  assert np.array_equal(mean, e3.window_kf(s, m, split='dev')) and (var > 0).all()
+  a = e2.intervene(s, d, 4, [0], 'zero')
+  b = e2.intervene(s, d, 4, [0], 'zero', block=e2.BLOCK)
+  assert all(np.array_equal(u, v) for u, v in zip(a, b))
+
+
 if __name__ == '__main__':
   for name, fn in list(globals().items()):
     if name.startswith('test_'):

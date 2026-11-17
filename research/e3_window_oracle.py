@@ -17,18 +17,18 @@ import oracle
 import e2_block_position as e2
 
 
-def window_kf(s, m, use=None):
+def window_kf(s, m, use=None, split='dev', return_var=False):
   n = len(s['raw'])
   means = np.zeros((n, 5))
   covs = np.broadcast_to(np.eye(5) * oracle.Q / (1 - oracle.PHI ** 2), (n, 5, 5)).copy()
-  t = np.arange(n) + oracle.OFFSET['dev']
+  t = np.arange(n) + oracle.OFFSET[split]
   c = oracle.season(t)
   starts = s['ends'] - common.LOOKBACK + 1
   if use is None:
     use = np.ones((len(starts), common.LOOKBACK, 6), bool)
   # starts-1 indexes the stationary prior; it must stay >= 0.
-  mean, _ = oracle.batched_restart(means, covs, t, c, s['raw'], m, np.maximum(starts, 1), s['ends'], use)
-  return mean
+  mean, var = oracle.batched_restart(means, covs, t, c, s['raw'], m, np.maximum(starts, 1), s['ends'], use)
+  return (mean, var) if return_var else mean
 
 
 def per_seed(seed):

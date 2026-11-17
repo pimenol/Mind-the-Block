@@ -141,16 +141,25 @@ def train_set(d, train_kind, mode, data_seed):
 def get_model(d, data_seed, train_kind='scatter', mode='zero', init=0,
               epochs=12, hidden=8):
   """Train or load a cached GRU (cache lives in results/models, ignored)."""
-  MODELS.mkdir(parents=True, exist_ok=True)
   tag = '' if (epochs, hidden) == (12, 8) else f'_e{epochs}_h{hidden}'
-  path = MODELS / f'{data_seed}_{train_kind}_{mode}_{init}{tag}.npz'
+  name = f'{data_seed}_{train_kind}_{mode}_{init}{tag}'
+
+  def build():
+    tx, ty = train_set(d, train_kind, mode, data_seed)
+    return train_gru(tx, ty, data_seed, init, epochs=epochs, hidden=hidden)
+  return cached_model(name, build)
+
+
+def cached_model(name, build):
+  """Load results/models/{name}.npz, or call build() and save the result."""
+  MODELS.mkdir(parents=True, exist_ok=True)
+  path = MODELS / f'{name}.npz'
   if path.exists():
     p = dict(np.load(path))
     model = GRU(18, 0)
     model.p = {k: (v if v.ndim else np.array(v)) for k, v in p.items()}
     return model
-  tx, ty = train_set(d, train_kind, mode, data_seed)
-  model = train_gru(tx, ty, data_seed, init, epochs=epochs, hidden=hidden)
+  model = build()
   np.savez(path, **model.p)
   return model
 

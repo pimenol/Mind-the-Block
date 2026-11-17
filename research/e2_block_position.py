@@ -21,13 +21,13 @@ BLOCK = 8
 MIN_END = common.LOOKBACK + 16 + BLOCK  # same windows for every offset
 
 
-def intervene(s, d, offset, sensors, mode):
+def intervene(s, d, offset, sensors, mode, block=BLOCK):
   """Return (features, persistence, use-matrix, starts) after inserting the
   outage into each window of split dict s."""
   mean, std = d['mean'], d['std']
   ends = s['ends']
-  start = ends - offset - BLOCK + 1
-  steps = offset + BLOCK
+  start = ends - offset - block + 1
+  steps = offset + block
   x = s['x'].copy()
   prev = s['filled'][start - 1].copy()
   a = s['age'][start - 1].copy()
@@ -37,7 +37,7 @@ def intervene(s, d, offset, sensors, mode):
   for k in range(steps):
     t = start + k
     v = s['valid'][t].copy()
-    if k < BLOCK:
+    if k < block:
       v[:, blocked] = False
       use[:, k, blocked] = False
     prev = np.where(v, s['raw'][t], prev)
