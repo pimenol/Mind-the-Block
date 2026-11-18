@@ -3,7 +3,7 @@
 This page tells you which files to read and how to add your work without
 conflicts with other people.
 
-## Read these 5 files, in this order (about 20 minutes)
+## Read these 5 files, in this order
 
 1. `research/HYPOTHESES.md`: the questions and the result that proves each one wrong.
 2. `research/common.py`: shared helpers. `load` gives the data, `make_split` gives the windows, `get_model` trains or loads a GRU.
@@ -27,8 +27,8 @@ You can ignore the rest. `starter.py`, `check_data.py`, `generate_data.py` and
 To start, copy the template and run it from the repo root:
 
 ```bash
-cp research/scratch/template.py research/scratch/anna.py
-python research/scratch/anna.py          # writes results/scratch_anna.json
+cp research/scratch/template.py research/scratch/hella.py
+python research/scratch/hella.py          # writes results/scratch_hella.json
 ```
 
 When your result is final, rename the file to the next `research/eN_<topic>.py`
@@ -40,7 +40,7 @@ You only edit your own file, so the commands are always the same:
 
 ```bash
 git pull --rebase
-git add research/scratch/anna.py results/scratch_anna.json
+git add research/scratch/hella.py results/scratch_hella.json
 git commit -m "feat: test age weighting on block windows"
 git push
 ```
