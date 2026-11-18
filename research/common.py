@@ -1,9 +1,7 @@
-"""Shared helpers for the Step-1 mechanism experiments.
+"""Shared helpers. Nothing here reads the test partition.
 
-Nothing here reads the reserved test partition. All evaluation is on dev.
-The GRU math is the unchanged `starter.GRU`; feature building reproduces
-`starter.windows` exactly (asserted in test_research.py) but also accepts an
-explicit mask, so experiments can intervene on the mask per window.
+The GRU is the unchanged `starter.GRU`. `make_split` builds the same features
+as `starter.windows`, and returns the mask, fill and age arrays too.
 """
 import os
 
@@ -25,8 +23,6 @@ MODELS = RESULTS / 'models'
 SEEDS = [940, 941, 942]
 INITS = [0, 1, 2, 3, 4]
 LOOKBACK, HORIZON = 24, 6
-AGE_BINS = [(0, 0), (1, 1), (2, 2), (3, 4), (5, 8), (9, 10**6)]
-AGE_LABELS = ['0', '1', '2', '3-4', '5-8', '9+']
 
 
 def load(seed):
@@ -39,19 +35,8 @@ def load(seed):
 
 
 def masked(observed, kind, seed):
-  """Artificial mask from starter.impose. kind may be 'scatter', 'block',
-  or a 6-tuple of kinds per sensor (factorial designs)."""
-  if isinstance(kind, str):
-    return impose(observed, kind, seed)
-  out = observed.copy()
-  mask = np.zeros(observed.shape, bool)
-  cache = {}
-  for j, k in enumerate(kind):
-    if k not in cache:
-      cache[k] = impose(observed, k, seed)[1]
-    mask[:, j] = cache[k][:, j]
-  out[mask] = np.nan
-  return out, mask
+  """Artificial mask from starter.impose: 'scatter' or 'block'."""
+  return impose(observed, kind, seed)
 
 
 def fill_age(raw, mean):
@@ -74,16 +59,12 @@ def ends_for(n):
 
 
 def feature_series(filled, valid, age, mean, std, mode):
-  """mode: 'age' (full), 'zero' (ages zeroed, starter arm), 'fill'
-  (mask and age channels zeroed)."""
+  """mode: 'age' (age features) or 'zero' (zeros in the age slots), as in starter.run."""
   f = (filled - mean) / std
   m = valid.astype(float)
   a = np.minimum(age, 48) / 48
   if mode == 'zero':
     a = np.zeros_like(a)
-  if mode == 'fill':
-    a = np.zeros_like(a)
-    m = np.zeros_like(m)
   return np.concatenate([f, m, a], 1)
 
 
@@ -126,14 +107,7 @@ def train_gru(tx, ty, data_seed, init, epochs=12, per_epoch=1600, hidden=8):
 
 
 def train_set(d, train_kind, mode, data_seed):
-  """Training windows. 'mixed' picks scatter or block per window (50/50)
-  with a fixed rng, so the example count and budget are unchanged."""
-  if train_kind == 'mixed':
-    a = make_split(d, 'train', 'scatter', data_seed + 10, mode)
-    b = make_split(d, 'train', 'block', data_seed + 10, mode)
-    pick = np.random.default_rng(data_seed + 77).random(len(a['y'])) < .5
-    x = np.where(pick[:, None, None], b['x'], a['x'])
-    return x, a['y']
+  """Training windows with mask seed data_seed + 10, as in starter.run."""
   s = make_split(d, 'train', train_kind, data_seed + 10, mode)
   return s['x'], s['y']
 
@@ -167,24 +141,6 @@ def cached_model(name, build):
 def rmse(pred, y, std0):
   return float(np.sqrt(np.mean((pred - y) ** 2)) * std0)
 
-
-def age_bin_index(age0):
-  out = np.full(len(age0), -1)
-  for i, (lo, hi) in enumerate(AGE_BINS):
-    out[(age0 >= lo) & (age0 <= hi)] = i
-  return out
-
-
-def per_bin(sq_err, age0, std0):
-  """Per age-bin MSE in raw units, with counts and mean age."""
-  b = age_bin_index(age0)
-  rows = []
-  for i, label in enumerate(AGE_LABELS):
-    sel = b == i
-    rows.append(dict(bin=label, n=int(sel.sum()),
-                     mean_age=float(age0[sel].mean()) if sel.any() else None,
-                     mse=float(sq_err[sel].mean() * std0 ** 2) if sel.any() else None))
-  return rows
 
 
 def run_parallel(fn, args, procs=None):

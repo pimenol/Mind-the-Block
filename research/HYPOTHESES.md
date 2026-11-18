@@ -6,4 +6,4 @@ row with a date.
 
 | ID | Date | Claim | Falsified if | Experiment | Verdict |
 |---|---|---|---|---|---|
-| H1 | YYYY-MM-DD | Example: the GRU fails when sensor 0 is stale at the forecast origin. | The gap does not grow with the age of sensor 0. | `e1_<topic>.py` | open |
+| H1 | YYYY-MM-DD | (what you think causes the block-mask error) | (the result that proves the claim wrong) | `e1_<topic>.py` | open |
