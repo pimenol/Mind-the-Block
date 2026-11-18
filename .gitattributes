@@ -1,0 +1,3 @@
+# Built files: GitHub hides them in diffs. Never edit by hand, rebuild instead.
+report/report*.html linguist-generated=true
+results/*.json linguist-generated=true
